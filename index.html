@@ -798,10 +798,25 @@ onAuthStateChanged(auth, async (user) => {
 
 // ─── LOAD DATA ────────────────────────────────────────────────────────────────
 async function loadAllData() {
+  // Tudo em paralelo — categorias, mês atual, mês anterior, e restantes coleções
+  const now = new Date();
+  const thisK = mk(now.getFullYear(), now.getMonth());
+  const prevD = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevK = mk(prevD.getFullYear(), prevD.getMonth());
+
+  // Fase 1: carregar o essencial em paralelo (mês atual + anterior + categorias + contas)
+  const [catsSnap, mCurSnap, expCurSnap, mPrevSnap, expPrevSnap, accSnap, cmpSnap] = await Promise.all([
+    getDocs(catsRef()),
+    getDoc(monthRef(thisK)),
+    getDocs(query(expensesRef(thisK), orderBy('date', 'desc'))),
+    getDoc(monthRef(prevK)),
+    getDocs(query(expensesRef(prevK), orderBy('date', 'desc'))),
+    getDocs(accountsRef()),
+    getDocs(commitRef()),
+  ]);
+
   // Categorias
-  const catsSnap = await getDocs(catsRef());
   if (catsSnap.empty) {
-    // Primeiro login: criar categorias padrão
     CATS = DCATS.map(c => ({ ...c }));
     for (const cat of CATS) {
       const ref = await addDoc(catsRef(), cat);
@@ -811,37 +826,63 @@ async function loadAllData() {
     CATS = catsSnap.docs.map(d => ({ ...d.data(), firestoreId: d.id }));
   }
 
-  // Carregar meses dos últimos 2 anos + atual para ter dados suficientes
+  // Mês atual e anterior
   DATA = {};
-  const thisYear = new Date().getFullYear();
-  for (let yr = thisYear - 1; yr <= thisYear + 1; yr++) {
+  const loadMonth = (k, mSnap, expSnap) => {
+    const budget = mSnap.exists() ? (mSnap.data().budget || '') : '';
+    const expenses = expSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+    if (budget || expenses.length > 0) DATA[k] = { budget, expenses };
+  };
+  loadMonth(thisK, mCurSnap, expCurSnap);
+  loadMonth(prevK, mPrevSnap, expPrevSnap);
+
+  // Contas e compromissos
+  ACCOUNTS = accSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+  COMMITMENTS = cmpSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+
+  // Fase 2: restantes dados em segundo plano (não bloqueia o ecrã)
+  loadRemainingData(thisK, prevK);
+}
+
+async function loadRemainingData(skipK1, skipK2) {
+  const now = new Date();
+  const thisYear = now.getFullYear();
+
+  // Meses restantes (exceto atual e anterior já carregados)
+  const monthKeys = [];
+  for (let yr = thisYear - 1; yr <= thisYear; yr++) {
     for (let mo = 0; mo < 12; mo++) {
       const k = mk(yr, mo);
-      const mSnap = await getDoc(monthRef(k));
-      const budget = mSnap.exists() ? (mSnap.data().budget || '') : '';
-      const expSnap = await getDocs(query(expensesRef(k), orderBy('date', 'desc')));
-      const expenses = expSnap.docs.map(d => ({ ...d.data(), id: d.id }));
-      if (budget || expenses.length > 0) {
-        DATA[k] = { budget, expenses };
-      }
+      if (k !== skipK1 && k !== skipK2) monthKeys.push(k);
     }
   }
 
-  // Compromissos
-  const cmpSnap = await getDocs(commitRef());
-  COMMITMENTS = cmpSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+  // Carregar em paralelo em lotes de 6
+  const batchSize = 6;
+  for (let i = 0; i < monthKeys.length; i += batchSize) {
+    const batch = monthKeys.slice(i, i + batchSize);
+    const results = await Promise.all(batch.map(k => Promise.all([
+      getDoc(monthRef(k)),
+      getDocs(query(expensesRef(k), orderBy('date', 'desc')))
+    ])));
+    results.forEach(([mSnap, expSnap], idx) => {
+      const k = batch[idx];
+      const budget = mSnap.exists() ? (mSnap.data().budget || '') : '';
+      const expenses = expSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+      if (budget || expenses.length > 0) DATA[k] = { budget, expenses };
+    });
+  }
 
-  // Contas bancárias
-  const accSnap = await getDocs(accountsRef());
-  ACCOUNTS = accSnap.docs.map(d => ({ ...d.data(), id: d.id }));
-
-  // Transferências
-  const transfSnap = await getDocs(transfersRef());
+  // Transferências e lucros (menos urgentes)
+  const [transfSnap, lucrosSnap] = await Promise.all([
+    getDocs(transfersRef()),
+    getDocs(lucrosRef()),
+  ]);
   TRANSFERS = transfSnap.docs.map(d => ({ ...d.data(), id: d.id }));
-
-  // Lucros
-  const lucrosSnap = await getDocs(lucrosRef());
   LUCROS = lucrosSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+
+  // Atualiza UI com dados completos
+  renderAll();
 }
 
 // ─── AUTH FUNÇÕES ─────────────────────────────────────────────────────────────

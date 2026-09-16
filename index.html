@@ -355,6 +355,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
       <div class="sb-section">Visão</div>
       <div class="nav on" onclick="goPage('dashboard')"><i class="ti ti-layout-dashboard"></i>Dashboard</div>
       <div class="nav" onclick="goPage('despesas')"><i class="ti ti-receipt"></i>Despesas</div>
+      <div class="nav" onclick="goPage('lucros')"><i class="ti ti-trending-up"></i>Lucros</div>
       <div class="nav" onclick="goPage('analise')"><i class="ti ti-chart-bar"></i>Análise</div>
       <div class="sb-section">Gestão</div>
       <div class="nav" onclick="goPage('contas')"><i class="ti ti-building-bank"></i>Contas</div>
@@ -576,6 +577,56 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
         </div>
       </div>
 
+      <!-- LUCROS -->
+      <div class="page" id="p-lucros">
+        <div class="topbar">
+          <div><div class="page-title">Lucros</div><div class="page-sub">Registo de rendimentos e receitas</div></div>
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <button class="mnav" onclick="changeLucroMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+            <span class="month-label" id="lucroMonthLabel">—</span>
+            <button class="mnav" onclick="changeLucroMonth(1)"><i class="ti ti-chevron-right"></i></button>
+          </div>
+        </div>
+        <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:1.5rem;">
+          <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Total do mês</span><div class="kpi-ico" style="background:rgba(52,211,153,.08);"><i class="ti ti-trending-up" style="color:#34d399;"></i></div></div><div class="kpi-val" id="lucroMesTotal" style="color:#34d399;">0,00 €</div><div class="kpi-accent" style="background:linear-gradient(90deg,#34d399,transparent);"></div></div>
+          <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Nº entradas</span><div class="kpi-ico" style="background:rgba(120,160,255,.08);"><i class="ti ti-list" style="color:var(--blue);"></i></div></div><div class="kpi-val" id="lucroMesCount">0</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--blue),transparent);"></div></div>
+          <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Saldo do mês</span><div class="kpi-ico" style="background:rgba(232,255,71,.08);"><i class="ti ti-scale" style="color:var(--lime);"></i></div></div><div class="kpi-val" id="lucroMesSaldo">—</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--lime),transparent);"></div></div>
+          <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Total acumulado</span><div class="kpi-ico" style="background:rgba(255,190,100,.08);"><i class="ti ti-coin" style="color:var(--amber);"></i></div></div><div class="kpi-val" id="lucroGrandTotal">0,00 €</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--amber),transparent);"></div></div>
+        </div>
+        <div class="grid2">
+          <div>
+            <div class="card">
+              <div class="card-head"><span class="card-label">Entradas do mês</span></div>
+              <div id="lucroList"><div class="empty"><i class="ti ti-trending-up"></i>Sem lucros registados</div></div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-head"><span class="card-label" id="lucroFormLabel">Novo lucro</span></div>
+              <div class="fg"><label>Descrição</label><input class="fi" type="text" id="lucroDesc" placeholder="ex: Carregamentos, Venda, Salário..."></div>
+              <div class="fr2">
+                <div class="fg"><label>Valor (€)</label><input class="fi" type="number" id="lucroAmt" min="0" step="0.01" placeholder="0,00"></div>
+                <div class="fg"><label>Data</label><input class="fi" type="date" id="lucroDate"></div>
+              </div>
+              <div class="fg"><label>Categoria</label>
+                <select class="fi" id="lucroCat">
+                  <option value="carregamentos">Carregamentos</option>
+                  <option value="salario">Salário</option>
+                  <option value="venda">Venda</option>
+                  <option value="freelance">Freelance</option>
+                  <option value="outro">Outro</option>
+                </select>
+              </div>
+              <div class="fg"><label>Nota</label><input class="fi" type="text" id="lucroNota" placeholder="Opcional..."></div>
+              <div style="display:flex;gap:.5rem;margin-top:.25rem;">
+                <button class="btn-add" id="lucroSaveBtn" onclick="saveLucro()" style="flex:1;background:linear-gradient(135deg,#34d399,#059669);"><i class="ti ti-plus"></i><span id="lucroSaveLbl">Adicionar lucro</span></button>
+                <button id="lucroCancelBtn" onclick="cancelLucro()" style="display:none;flex:1;padding:.75rem;background:var(--ink3);color:var(--soft);border:1px solid var(--line2);border-radius:var(--r);font-family:Sora,sans-serif;font-size:.875rem;cursor:pointer;">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- COMPROMISSOS -->
       <div class="page" id="p-compromissos">
         <div class="topbar">
@@ -707,6 +758,8 @@ let CMP_EDIT_ID = null;
 let ACCOUNTS = []; // [{id, nome, tipo, saldo, cor, nota}]
 let TRANSFERS = []; // [{id, de, para, amt, date, nota}]
 let CONTA_EDIT_ID = null;
+let LUCROS = []; // [{id, desc, amt, date, cat, nota}]
+let LUCRO_EDIT_ID = null;
 let LOGIN_MODE = 'entrar'; // 'entrar' | 'registar'
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
@@ -729,6 +782,7 @@ function expensesRef(k) { return collection(db, 'users', CU.uid, 'months', k, 'e
 function commitRef() { return collection(db, 'users', CU.uid, 'commitments'); }
 function accountsRef() { return collection(db, 'users', CU.uid, 'accounts'); }
 function transfersRef() { return collection(db, 'users', CU.uid, 'transfers'); }
+function lucrosRef() { return collection(db, 'users', CU.uid, 'lucros'); }
 
 // ─── AUTH STATE ───────────────────────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
@@ -784,6 +838,10 @@ async function loadAllData() {
   // Transferências
   const transfSnap = await getDocs(transfersRef());
   TRANSFERS = transfSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+
+  // Lucros
+  const lucrosSnap = await getDocs(lucrosRef());
+  LUCROS = lucrosSnap.docs.map(d => ({ ...d.data(), id: d.id }));
 }
 
 // ─── AUTH FUNÇÕES ─────────────────────────────────────────────────────────────
@@ -831,7 +889,7 @@ window.doLogin = async function() {
 
 window.doLogout = async function() {
   await signOut(auth);
-  DATA = {}; CATS = []; COMMITMENTS = []; ACCOUNTS = []; TRANSFERS = [];
+  DATA = {}; CATS = []; COMMITMENTS = []; ACCOUNTS = []; TRANSFERS = []; LUCROS = []; LUCRO_EDIT_ID = null;
   [donutC, barC, analDonutC].forEach(c => { if (c) c.destroy(); });
   donutC = barC = analDonutC = null;
 };
@@ -867,7 +925,7 @@ window.goPage = function(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav').forEach(n => n.classList.remove('on'));
   document.getElementById('p-' + name).classList.add('active');
-  const nm = { dashboard: 0, despesas: 1, analise: 2, contas: 3, compromissos: 4, categorias: 5, definicoes: 6 };
+  const nm = { dashboard: 0, despesas: 1, lucros: 2, analise: 3, contas: 4, compromissos: 5, categorias: 6, definicoes: 7 };
   document.querySelectorAll('.nav')[nm[name]]?.classList.add('on');
   closeSidebar();
   if (name === 'compromissos') renderCompromissos();
@@ -876,6 +934,7 @@ window.goPage = function(name) {
   if (name === 'categorias') renderCategorias();
   if (name === 'definicoes') renderDefinicoes();
   if (name === 'contas') renderContas();
+  if (name === 'lucros') renderLucros();
 };
 
 window.changeMonth = function(d) { CM += d; if (CM < 0) { CM = 11; CY--; } if (CM > 11) { CM = 0; CY++; } renderDashboard(); };
@@ -1372,6 +1431,7 @@ function renderDefinicoes() {
 function renderAll() {
   renderDashboard();
   renderContas(); // atualiza saldos e selector de conta sempre
+  if (document.getElementById('p-lucros').classList.contains('active')) renderLucros();
   if (document.getElementById('p-compromissos').classList.contains('active')) renderCompromissos();
   if (document.getElementById('p-despesas').classList.contains('active')) renderDespesas();
   if (document.getElementById('p-analise').classList.contains('active')) renderAnalise();
@@ -1544,6 +1604,123 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/fluxo-despesas/sw.js').catch(() => {});
   });
 }
+// ─── LUCROS ──────────────────────────────────────────────────────────────────
+let LUCRO_MONTH = new Date().toISOString().slice(0, 7); // 'yyyy-mm'
+
+window.changeLucroMonth = function(dir) {
+  const [y, m] = LUCRO_MONTH.split('-').map(Number);
+  const d = new Date(y, m - 1 + dir, 1);
+  LUCRO_MONTH = d.toISOString().slice(0, 7);
+  renderLucros();
+};
+
+window.saveLucro = async function() {
+  const desc = document.getElementById('lucroDesc').value.trim();
+  const amt = parseFloat(document.getElementById('lucroAmt').value);
+  const date = document.getElementById('lucroDate').value;
+  const cat = document.getElementById('lucroCat').value;
+  const nota = document.getElementById('lucroNota').value.trim();
+  if (!desc || isNaN(amt) || amt <= 0 || !date) return;
+
+  if (LUCRO_EDIT_ID) {
+    await updateDoc(doc(db, 'users', CU.uid, 'lucros', LUCRO_EDIT_ID), { desc, amt, date, cat, nota });
+    const idx = LUCROS.findIndex(l => l.id === LUCRO_EDIT_ID);
+    if (idx >= 0) LUCROS[idx] = { ...LUCROS[idx], desc, amt, date, cat, nota };
+    cancelLucro();
+  } else {
+    const ref = await addDoc(lucrosRef(), { desc, amt, date, cat, nota });
+    LUCROS.push({ id: ref.id, desc, amt, date, cat, nota });
+    cancelLucro();
+  }
+  renderLucros();
+};
+
+window.editLucro = function(id) {
+  const l = LUCROS.find(l => l.id === id);
+  if (!l) return;
+  LUCRO_EDIT_ID = id;
+  document.getElementById('lucroDesc').value = l.desc;
+  document.getElementById('lucroAmt').value = l.amt;
+  document.getElementById('lucroDate').value = l.date;
+  document.getElementById('lucroCat').value = l.cat || 'outro';
+  document.getElementById('lucroNota').value = l.nota || '';
+  document.getElementById('lucroFormLabel').textContent = 'Editar lucro';
+  document.getElementById('lucroSaveLbl').textContent = 'Guardar';
+  document.getElementById('lucroSaveBtn').querySelector('i').className = 'ti ti-check';
+  document.getElementById('lucroCancelBtn').style.display = '';
+};
+
+window.deleteLucro = async function(id) {
+  if (!confirm('Apagar este registo?')) return;
+  await deleteDoc(doc(db, 'users', CU.uid, 'lucros', id));
+  LUCROS = LUCROS.filter(l => l.id !== id);
+  renderLucros();
+};
+
+window.cancelLucro = function() {
+  LUCRO_EDIT_ID = null;
+  ['lucroDesc', 'lucroAmt', 'lucroNota'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('lucroDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('lucroCat').value = 'carregamentos';
+  document.getElementById('lucroFormLabel').textContent = 'Novo lucro';
+  document.getElementById('lucroSaveLbl').textContent = 'Adicionar lucro';
+  document.getElementById('lucroSaveBtn').querySelector('i').className = 'ti ti-plus';
+  document.getElementById('lucroCancelBtn').style.display = 'none';
+};
+
+const CAT_LUCRO_ICONS = { carregamentos: 'ti-device-mobile-charging', salario: 'ti-briefcase', venda: 'ti-shopping-bag', freelance: 'ti-code', outro: 'ti-coin' };
+const CAT_LUCRO_LABELS = { carregamentos: 'Carregamentos', salario: 'Salário', venda: 'Venda', freelance: 'Freelance', outro: 'Outro' };
+
+function renderLucros() {
+  // Month label
+  const [y, m] = LUCRO_MONTH.split('-').map(Number);
+  const mNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const lbl = document.getElementById('lucroMonthLabel');
+  if (lbl) lbl.textContent = mNames[m - 1] + ' ' + y;
+
+  // Set default date to current month
+  const dateEl = document.getElementById('lucroDate');
+  if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
+
+  const mes = LUCROS.filter(l => l.date && l.date.startsWith(LUCRO_MONTH));
+  const mesTotal = mes.reduce((s, l) => s + (parseFloat(l.amt) || 0), 0);
+  const grandTotal = LUCROS.reduce((s, l) => s + (parseFloat(l.amt) || 0), 0);
+
+  // Saldo do mês = lucros - despesas
+  const k = LUCRO_MONTH;
+  const despMes = (DATA[k]?.expenses || []).reduce((s, e) => s + (parseFloat(e.amt) || 0), 0);
+  const saldo = mesTotal - despMes;
+
+  document.getElementById('lucroMesTotal').textContent = fmt(mesTotal);
+  document.getElementById('lucroMesCount').textContent = mes.length;
+  document.getElementById('lucroGrandTotal').textContent = fmt(grandTotal);
+  const saldoEl = document.getElementById('lucroMesSaldo');
+  saldoEl.textContent = fmt(saldo);
+  saldoEl.style.color = saldo >= 0 ? '#34d399' : '#ff6b7a';
+
+  // List
+  const sorted = [...mes].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  document.getElementById('lucroList').innerHTML = sorted.length ? sorted.map(l => {
+    const icon = CAT_LUCRO_ICONS[l.cat] || 'ti-coin';
+    const label = CAT_LUCRO_LABELS[l.cat] || 'Outro';
+    return `<div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--line);">
+      <div style="width:38px;height:38px;border-radius:10px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="ti ${icon}" style="color:#34d399;font-size:1rem;"></i>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.88rem;font-weight:500;color:var(--head);margin-bottom:.1rem;">${l.desc}</div>
+        <div style="font-size:.7rem;color:var(--muted);">${fd(l.date)} · ${label}${l.nota ? ' · ' + l.nota : ''}</div>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.92rem;font-weight:600;color:#34d399;margin-right:.5rem;">+${fmt(parseFloat(l.amt)||0)}</div>
+      <div style="display:flex;gap:.25rem;">
+        <button onclick="editLucro('${l.id}')" style="background:none;border:1px solid var(--line2);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);"><i class="ti ti-pencil" style="font-size:.8rem;"></i></button>
+        <button onclick="deleteLucro('${l.id}')" style="background:none;border:1px solid var(--line2);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;"><i class="ti ti-trash" style="font-size:.8rem;color:#ff6b7a;"></i></button>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty"><i class="ti ti-trending-up"></i>Sem lucros em ' + mNames[m-1] + '</div>';
+}
+
+
 </script>
 </body>
 </html>

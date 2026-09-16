@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Fluxo">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -305,6 +305,22 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
   </div>
 </div>
 
+<!-- MODAL TRANSFERÊNCIA -->
+<div class="modal-overlay" id="transfModal">
+  <div class="modal-box">
+    <div class="modal-head"><span class="modal-title">Nova transferência</span><button class="modal-close" onclick="closeTransfModal()"><i class="ti ti-x"></i></button></div>
+    <div class="fg"><label>Da conta</label><select class="fi" id="transfDe"></select></div>
+    <div class="fg"><label>Para a conta</label><select class="fi" id="transfPara"></select></div>
+    <div class="fg"><label>Valor (€)</label><input class="fi" type="number" id="transfAmt" min="0" step="0.01" placeholder="0,00"></div>
+    <div class="fg"><label>Data</label><input class="fi" type="date" id="transfDate"></div>
+    <div class="fg"><label>Nota</label><input class="fi" type="text" id="transfNota" placeholder="Opcional..."></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeTransfModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveTransf()"><i class="ti ti-check"></i>Transferir</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOADING -->
 <div id="loadingScreen">
   <div class="loading-spinner"></div>
@@ -357,6 +373,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
       <div class="nav" onclick="goPage('despesas')"><i class="ti ti-receipt"></i>Despesas</div>
       <div class="nav" onclick="goPage('analise')"><i class="ti ti-chart-bar"></i>Análise</div>
       <div class="sb-section">Gestão</div>
+      <div class="nav" onclick="goPage('contas')"><i class="ti ti-building-bank"></i>Contas</div>
       <div class="nav" onclick="goPage('compromissos')"><i class="ti ti-calendar-due"></i>Compromissos</div>
       <div class="nav" onclick="goPage('categorias')"><i class="ti ti-tag"></i>Categorias</div>
       <div class="nav" onclick="goPage('definicoes')"><i class="ti ti-settings"></i>Definições</div>
@@ -416,6 +433,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
                 <div class="fg"><label>Data</label><input class="fi" type="date" id="dateInput"></div>
                 <div class="fg"><label>Categoria</label><select class="fi" id="catInput"></select></div>
               </div>
+              <div class="fg"><label>Conta</label><select class="fi" id="expContaInput"><option value="">Sem conta específica</option></select></div>
               <div class="fg"><label>Nota</label><textarea class="fi" id="noteInput" placeholder="Opcional..."></textarea></div>
               <button class="btn-add" onclick="addExpense()"><i class="ti ti-plus"></i>Registar despesa</button>
             </div>
@@ -499,6 +517,56 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
           <div class="card">
             <div class="card-head"><span class="card-label">Distribuição anual</span></div>
             <div class="doughnut-wrap"><canvas id="analDonut"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTAS -->
+      <div class="page" id="p-contas">
+        <div class="topbar"><div><div class="page-title">Contas</div><div class="page-sub">Saldos e movimentos das tuas contas bancárias</div></div></div>
+        <!-- KPIs -->
+        <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:1.5rem;">
+          <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Saldo total</span><div class="kpi-ico" style="background:rgba(232,255,71,.08);"><i class="ti ti-wallet" style="color:var(--lime);"></i></div></div><div class="kpi-val" id="contasTotalSaldo">0,00 €</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--lime),transparent);"></div></div>
+          <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Nº contas</span><div class="kpi-ico" style="background:rgba(120,160,255,.08);"><i class="ti ti-building-bank" style="color:var(--blue);"></i></div></div><div class="kpi-val" id="contasCount">0</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--blue),transparent);"></div></div>
+        </div>
+        <div class="grid2">
+          <div>
+            <!-- Lista de contas -->
+            <div class="card">
+              <div class="card-head"><span class="card-label">As minhas contas</span></div>
+              <div id="contasList"><div class="empty"><i class="ti ti-building-bank"></i>Sem contas adicionadas</div></div>
+            </div>
+            <!-- Transferências recentes -->
+            <div class="card">
+              <div class="card-head"><span class="card-label">Transferências</span>
+                <button class="btn-sm" onclick="openTransfModal()" style="margin-left:auto;"><i class="ti ti-arrows-transfer-up"></i>Nova</button>
+              </div>
+              <div id="transfList"><div class="empty"><i class="ti ti-arrows-transfer-up"></i>Sem transferências</div></div>
+            </div>
+          </div>
+          <div>
+            <!-- Form nova conta -->
+            <div class="card">
+              <div class="card-head"><span class="card-label" id="contaFormLabel">Nova conta</span></div>
+              <div class="fg"><label>Nome da conta</label><input class="fi" type="text" id="contaNome" placeholder="ex: Conta CTT, Millennium, MB Way..."></div>
+              <div class="fg"><label>Tipo</label>
+                <select class="fi" id="contaTipo">
+                  <option value="corrente">Conta corrente</option>
+                  <option value="poupanca">Conta poupança</option>
+                  <option value="mbway">MB Way</option>
+                  <option value="cartao">Cartão de crédito</option>
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="outro">Outro</option>
+                </select>
+              </div>
+              <div class="fg"><label>Saldo inicial (€)</label><input class="fi" type="number" id="contaSaldo" min="0" step="0.01" placeholder="0,00"></div>
+              <div class="fg"><label>Cor</label><input class="fi" type="color" id="contaCor" value="#78a0ff"></div>
+              <div class="fg"><label>Nota</label><input class="fi" type="text" id="contaNota" placeholder="Opcional..."></div>
+              <div style="display:flex;gap:.5rem;margin-top:.25rem;">
+                <button class="btn-add" id="contaSaveBtn" onclick="saveConta()" style="flex:1;"><i class="ti ti-plus"></i><span id="contaSaveLbl">Adicionar conta</span></button>
+                <button class="btn-cancel" id="contaCancelBtn" onclick="cancelConta()" style="display:none;flex:1;padding:.75rem;background:var(--ink3);color:var(--soft);border:1px solid var(--line2);border-radius:var(--r);font-family:Sora,sans-serif;font-size:.875rem;cursor:pointer;">Cancelar</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -631,6 +699,9 @@ let ANAL_Y = new Date().getFullYear(), DESP_Y = new Date().getFullYear();
 let donutC = null, barC = null, analDonutC = null;
 let EDIT_ID = null, EDIT_Y = null, EDIT_M = null;
 let CMP_EDIT_ID = null;
+let ACCOUNTS = []; // [{id, nome, tipo, saldo, cor, nota}]
+let TRANSFERS = []; // [{id, de, para, amt, date, nota}]
+let CONTA_EDIT_ID = null;
 let LOGIN_MODE = 'entrar'; // 'entrar' | 'registar'
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
@@ -651,6 +722,8 @@ function catsRef() { return collection(db, 'users', CU.uid, 'categories'); }
 function monthRef(k) { return doc(db, 'users', CU.uid, 'months', k); }
 function expensesRef(k) { return collection(db, 'users', CU.uid, 'months', k, 'expenses'); }
 function commitRef() { return collection(db, 'users', CU.uid, 'commitments'); }
+function accountsRef() { return collection(db, 'users', CU.uid, 'accounts'); }
+function transfersRef() { return collection(db, 'users', CU.uid, 'transfers'); }
 
 // ─── AUTH STATE ───────────────────────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
@@ -698,6 +771,14 @@ async function loadAllData() {
   // Compromissos
   const cmpSnap = await getDocs(commitRef());
   COMMITMENTS = cmpSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+
+  // Contas bancárias
+  const accSnap = await getDocs(accountsRef());
+  ACCOUNTS = accSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+
+  // Transferências
+  const transfSnap = await getDocs(transfersRef());
+  TRANSFERS = transfSnap.docs.map(d => ({ ...d.data(), id: d.id }));
 }
 
 // ─── AUTH FUNÇÕES ─────────────────────────────────────────────────────────────
@@ -745,7 +826,7 @@ window.doLogin = async function() {
 
 window.doLogout = async function() {
   await signOut(auth);
-  DATA = {}; CATS = []; COMMITMENTS = [];
+  DATA = {}; CATS = []; COMMITMENTS = []; ACCOUNTS = []; TRANSFERS = [];
   [donutC, barC, analDonutC].forEach(c => { if (c) c.destroy(); });
   donutC = barC = analDonutC = null;
 };
@@ -781,7 +862,7 @@ window.goPage = function(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav').forEach(n => n.classList.remove('on'));
   document.getElementById('p-' + name).classList.add('active');
-  const nm = { dashboard: 0, despesas: 1, analise: 2, compromissos: 3, categorias: 4, definicoes: 5 };
+  const nm = { dashboard: 0, despesas: 1, analise: 2, contas: 3, compromissos: 4, categorias: 5, definicoes: 6 };
   document.querySelectorAll('.nav')[nm[name]]?.classList.add('on');
   closeSidebar();
   if (name === 'compromissos') renderCompromissos();
@@ -789,6 +870,7 @@ window.goPage = function(name) {
   if (name === 'despesas') renderDespesas();
   if (name === 'categorias') renderCategorias();
   if (name === 'definicoes') renderDefinicoes();
+  if (name === 'contas') renderContas();
 };
 
 window.changeMonth = function(d) { CM += d; if (CM < 0) { CM = 11; CY--; } if (CM > 11) { CM = 0; CY++; } renderDashboard(); };
@@ -815,14 +897,23 @@ window.addExpense = async function() {
   const date = document.getElementById('dateInput').value;
   const cat = document.getElementById('catInput').value;
   const note = document.getElementById('noteInput').value.trim();
+  const contaId = document.getElementById('expContaInput')?.value || '';
   if (!desc || isNaN(amt) || amt <= 0) return;
 
   const k = mk(CY, CM);
   // Garante que o documento do mês existe
   await setDoc(monthRef(k), { budget: gmd().budget || '' }, { merge: true });
-  const ref = await addDoc(expensesRef(k), { desc, amt, date, cat, note });
+  // Deduz da conta selecionada
+  if (contaId) {
+    const acc = ACCOUNTS.find(a => a.id === contaId);
+    if (acc) {
+      acc.saldo = (parseFloat(acc.saldo) || 0) - amt;
+      await updateDoc(doc(db, 'users', CU.uid, 'accounts', contaId), { saldo: acc.saldo });
+    }
+  }
+  const ref = await addDoc(expensesRef(k), { desc, amt, date, cat, note, contaId });
 
-  const expense = { id: ref.id, desc, amt, date, cat, note };
+  const expense = { id: ref.id, desc, amt, date, cat, note, contaId };
   gmd().expenses.push(expense);
 
   document.getElementById('descInput').value = '';
@@ -1275,18 +1366,175 @@ function renderDefinicoes() {
 // ─── RENDER ALL ───────────────────────────────────────────────────────────────
 function renderAll() {
   renderDashboard();
+  renderContas(); // atualiza saldos e selector de conta sempre
   if (document.getElementById('p-compromissos').classList.contains('active')) renderCompromissos();
   if (document.getElementById('p-despesas').classList.contains('active')) renderDespesas();
   if (document.getElementById('p-analise').classList.contains('active')) renderAnalise();
   if (document.getElementById('p-categorias').classList.contains('active')) renderCategorias();
   if (document.getElementById('p-definicoes').classList.contains('active')) renderDefinicoes();
+  if (document.getElementById('p-contas').classList.contains('active')) renderContas();
 }
+
+// ─── CONTAS BANCÁRIAS ────────────────────────────────────────────────────────
+const TIPO_ICONS = { corrente: 'ti-building-bank', poupanca: 'ti-piggy-bank', mbway: 'ti-device-mobile', cartao: 'ti-credit-card', dinheiro: 'ti-coins', outro: 'ti-wallet' };
+const TIPO_LABELS = { corrente: 'Corrente', poupanca: 'Poupança', mbway: 'MB Way', cartao: 'Crédito', dinheiro: 'Dinheiro', outro: 'Outro' };
+
+window.saveConta = async function() {
+  const nome = document.getElementById('contaNome').value.trim();
+  const tipo = document.getElementById('contaTipo').value;
+  const saldo = parseFloat(document.getElementById('contaSaldo').value) || 0;
+  const cor = document.getElementById('contaCor').value;
+  const nota = document.getElementById('contaNota').value.trim();
+  if (!nome) return;
+
+  if (CONTA_EDIT_ID) {
+    await updateDoc(doc(db, 'users', CU.uid, 'accounts', CONTA_EDIT_ID), { nome, tipo, saldo, cor, nota });
+    const idx = ACCOUNTS.findIndex(a => a.id === CONTA_EDIT_ID);
+    if (idx >= 0) ACCOUNTS[idx] = { ...ACCOUNTS[idx], nome, tipo, saldo, cor, nota };
+    cancelConta();
+  } else {
+    const ref = await addDoc(accountsRef(), { nome, tipo, saldo, cor, nota });
+    ACCOUNTS.push({ id: ref.id, nome, tipo, saldo, cor, nota });
+    cancelConta();
+  }
+  renderContas();
+  renderAll();
+};
+
+window.editConta = function(id) {
+  const a = ACCOUNTS.find(a => a.id === id);
+  if (!a) return;
+  CONTA_EDIT_ID = id;
+  document.getElementById('contaNome').value = a.nome;
+  document.getElementById('contaTipo').value = a.tipo;
+  document.getElementById('contaSaldo').value = a.saldo;
+  document.getElementById('contaCor').value = a.cor || '#78a0ff';
+  document.getElementById('contaNota').value = a.nota || '';
+  document.getElementById('contaFormLabel').textContent = 'Editar conta';
+  document.getElementById('contaSaveLbl').textContent = 'Guardar';
+  document.getElementById('contaSaveBtn').querySelector('i').className = 'ti ti-check';
+  document.getElementById('contaCancelBtn').style.display = '';
+};
+
+window.deleteConta = async function(id) {
+  if (!confirm('Apagar esta conta? Os saldos não serão recuperados.')) return;
+  await deleteDoc(doc(db, 'users', CU.uid, 'accounts', id));
+  ACCOUNTS = ACCOUNTS.filter(a => a.id !== id);
+  renderContas();
+  renderAll();
+};
+
+window.cancelConta = function() {
+  CONTA_EDIT_ID = null;
+  ['contaNome', 'contaSaldo', 'contaNota'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('contaTipo').value = 'corrente';
+  document.getElementById('contaCor').value = '#78a0ff';
+  document.getElementById('contaFormLabel').textContent = 'Nova conta';
+  document.getElementById('contaSaveLbl').textContent = 'Adicionar conta';
+  document.getElementById('contaSaveBtn').querySelector('i').className = 'ti ti-plus';
+  document.getElementById('contaCancelBtn').style.display = 'none';
+};
+
+window.openTransfModal = function() {
+  if (ACCOUNTS.length < 2) { alert('Precisas de pelo menos 2 contas para transferir.'); return; }
+  const de = document.getElementById('transfDe');
+  const para = document.getElementById('transfPara');
+  de.innerHTML = ACCOUNTS.map(a => `<option value="${a.id}">${a.nome} (${fmt(parseFloat(a.saldo)||0)})</option>`).join('');
+  para.innerHTML = ACCOUNTS.map((a, i) => `<option value="${a.id}"${i===1?' selected':''}>${a.nome} (${fmt(parseFloat(a.saldo)||0)})</option>`).join('');
+  document.getElementById('transfDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('transfModal').classList.add('open');
+};
+
+window.closeTransfModal = function() {
+  document.getElementById('transfModal').classList.remove('open');
+  document.getElementById('transfAmt').value = '';
+  document.getElementById('transfNota').value = '';
+};
+
+window.saveTransf = async function() {
+  const de = document.getElementById('transfDe').value;
+  const para = document.getElementById('transfPara').value;
+  const amt = parseFloat(document.getElementById('transfAmt').value);
+  const date = document.getElementById('transfDate').value;
+  const nota = document.getElementById('transfNota').value.trim();
+  if (!de || !para || de === para || isNaN(amt) || amt <= 0) {
+    alert('Verifica os campos. As contas têm de ser diferentes.'); return;
+  }
+  const accDe = ACCOUNTS.find(a => a.id === de);
+  const accPara = ACCOUNTS.find(a => a.id === para);
+  if (!accDe || !accPara) return;
+
+  // Atualiza saldos
+  accDe.saldo = (parseFloat(accDe.saldo) || 0) - amt;
+  accPara.saldo = (parseFloat(accPara.saldo) || 0) + amt;
+  await updateDoc(doc(db, 'users', CU.uid, 'accounts', de), { saldo: accDe.saldo });
+  await updateDoc(doc(db, 'users', CU.uid, 'accounts', para), { saldo: accPara.saldo });
+
+  // Guarda transferência
+  const ref = await addDoc(transfersRef(), { de, para, amt, date, nota, deNome: accDe.nome, paraNome: accPara.nome });
+  TRANSFERS.unshift({ id: ref.id, de, para, amt, date, nota, deNome: accDe.nome, paraNome: accPara.nome });
+
+  closeTransfModal();
+  renderContas();
+};
+
+function renderContas() {
+  const totalSaldo = ACCOUNTS.reduce((s, a) => s + (parseFloat(a.saldo) || 0), 0);
+  document.getElementById('contasTotalSaldo').textContent = fmt(totalSaldo);
+  document.getElementById('contasCount').textContent = ACCOUNTS.length;
+
+  // Atualiza selector de conta no formulário de despesas
+  const sel = document.getElementById('expContaInput');
+  if (sel) {
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">Sem conta específica</option>' +
+      ACCOUNTS.map(a => `<option value="${a.id}"${a.id===prev?' selected':''}>${a.nome}</option>`).join('');
+  }
+
+  // Lista de contas
+  document.getElementById('contasList').innerHTML = ACCOUNTS.length ? ACCOUNTS.map(a => {
+    const saldo = parseFloat(a.saldo) || 0;
+    const icon = TIPO_ICONS[a.tipo] || 'ti-wallet';
+    const label = TIPO_LABELS[a.tipo] || 'Outro';
+    return `<div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--line);">
+      <div style="width:40px;height:40px;border-radius:10px;background:${a.cor}22;border:1px solid ${a.cor}44;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="ti ${icon}" style="color:${a.cor};font-size:1.1rem;"></i>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.88rem;font-weight:500;color:var(--head);margin-bottom:.15rem;">${a.nome}</div>
+        <div style="font-size:.72rem;color:var(--muted);">${label}${a.nota ? ' · ' + a.nota : ''}</div>
+      </div>
+      <div style="text-align:right;margin-right:.5rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.95rem;font-weight:600;color:${saldo < 0 ? '#ff6b7a' : '#34d399'};">${fmt(saldo)}</div>
+      </div>
+      <div style="display:flex;gap:.25rem;">
+        <button onclick="editConta('${a.id}')" style="background:none;border:1px solid var(--line2);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);"><i class="ti ti-pencil" style="font-size:.8rem;"></i></button>
+        <button onclick="deleteConta('${a.id}')" style="background:none;border:1px solid var(--line2);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ff6b7a44;"><i class="ti ti-trash" style="font-size:.8rem;color:#ff6b7a;"></i></button>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty"><i class="ti ti-building-bank"></i>Sem contas adicionadas</div>';
+
+  // Lista de transferências
+  const sorted = [...TRANSFERS].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  document.getElementById('transfList').innerHTML = sorted.length ? sorted.slice(0,20).map(t => `
+    <div style="display:flex;align-items:center;gap:.65rem;padding:.65rem 0;border-bottom:1px solid var(--line);">
+      <div style="width:32px;height:32px;border-radius:8px;background:rgba(120,160,255,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="ti ti-arrows-transfer-up" style="color:var(--blue);font-size:.9rem;"></i>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.82rem;color:var(--head);">${t.deNome} → ${t.paraNome}</div>
+        <div style="font-size:.7rem;color:var(--muted);">${fd(t.date)}${t.nota ? ' · ' + t.nota : ''}</div>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:var(--blue);">${fmt(t.amt)}</div>
+    </div>`).join('') : '<div class="empty"><i class="ti ti-arrows-transfer-up"></i>Sem transferências</div>';
+}
+
 
 </script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.register('/fluxo-despesas/sw.js').catch(() => {});
   });
 }
 </script>

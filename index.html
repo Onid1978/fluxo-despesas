@@ -305,22 +305,6 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
   </div>
 </div>
 
-<!-- MODAL TRANSFERÊNCIA -->
-<div class="modal-overlay" id="transfModal">
-  <div class="modal-box">
-    <div class="modal-head"><span class="modal-title">Nova transferência</span><button class="modal-close" onclick="closeTransfModal()"><i class="ti ti-x"></i></button></div>
-    <div class="fg"><label>Da conta</label><select class="fi" id="transfDe"></select></div>
-    <div class="fg"><label>Para a conta</label><select class="fi" id="transfPara"></select></div>
-    <div class="fg"><label>Valor (€)</label><input class="fi" type="number" id="transfAmt" min="0" step="0.01" placeholder="0,00"></div>
-    <div class="fg"><label>Data</label><input class="fi" type="date" id="transfDate"></div>
-    <div class="fg"><label>Nota</label><input class="fi" type="text" id="transfNota" placeholder="Opcional..."></div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeTransfModal()">Cancelar</button>
-      <button class="btn-save" onclick="saveTransf()"><i class="ti ti-check"></i>Transferir</button>
-    </div>
-  </div>
-</div>
-
 <!-- LOADING -->
 <div id="loadingScreen">
   <div class="loading-spinner"></div>
@@ -538,33 +522,54 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
             </div>
             <!-- Transferências recentes -->
             <div class="card">
-              <div class="card-head"><span class="card-label">Transferências</span>
-                <button class="btn-sm" onclick="openTransfModal()" style="margin-left:auto;"><i class="ti ti-arrows-transfer-up"></i>Nova</button>
-              </div>
+              <div class="card-head"><span class="card-label">Transferências recentes</span></div>
               <div id="transfList"><div class="empty"><i class="ti ti-arrows-transfer-up"></i>Sem transferências</div></div>
             </div>
           </div>
           <div>
-            <!-- Form nova conta -->
+            <!-- Tabs: Nova Conta | Transferência -->
             <div class="card">
-              <div class="card-head"><span class="card-label" id="contaFormLabel">Nova conta</span></div>
-              <div class="fg"><label>Nome da conta</label><input class="fi" type="text" id="contaNome" placeholder="ex: Conta CTT, Millennium, MB Way..."></div>
-              <div class="fg"><label>Tipo</label>
-                <select class="fi" id="contaTipo">
-                  <option value="corrente">Conta corrente</option>
-                  <option value="poupanca">Conta poupança</option>
-                  <option value="mbway">MB Way</option>
-                  <option value="cartao">Cartão de crédito</option>
-                  <option value="dinheiro">Dinheiro</option>
-                  <option value="outro">Outro</option>
-                </select>
+              <div class="login-tabs" style="margin-bottom:1.25rem;">
+                <div class="ltab on" id="tabContaForm" onclick="switchContaTab('conta')"><i class="ti ti-building-bank" style="margin-right:.3rem;font-size:.9rem;"></i>Nova conta</div>
+                <div class="ltab" id="tabTransfForm" onclick="switchContaTab('transf')"><i class="ti ti-arrows-transfer-up" style="margin-right:.3rem;font-size:.9rem;"></i>Transferência</div>
               </div>
-              <div class="fg"><label>Saldo inicial (€)</label><input class="fi" type="number" id="contaSaldo" min="0" step="0.01" placeholder="0,00"></div>
-              <div class="fg"><label>Cor</label><input class="fi" type="color" id="contaCor" value="#78a0ff"></div>
-              <div class="fg"><label>Nota</label><input class="fi" type="text" id="contaNota" placeholder="Opcional..."></div>
-              <div style="display:flex;gap:.5rem;margin-top:.25rem;">
-                <button class="btn-add" id="contaSaveBtn" onclick="saveConta()" style="flex:1;"><i class="ti ti-plus"></i><span id="contaSaveLbl">Adicionar conta</span></button>
-                <button class="btn-cancel" id="contaCancelBtn" onclick="cancelConta()" style="display:none;flex:1;padding:.75rem;background:var(--ink3);color:var(--soft);border:1px solid var(--line2);border-radius:var(--r);font-family:Sora,sans-serif;font-size:.875rem;cursor:pointer;">Cancelar</button>
+
+              <!-- Form nova conta -->
+              <div id="formConta">
+                <div class="card-head" style="margin-bottom:.75rem;"><span class="card-label" id="contaFormLabel">Nova conta</span></div>
+                <div class="fg"><label>Nome da conta</label><input class="fi" type="text" id="contaNome" placeholder="ex: Conta CTT, Millennium, MB Way..."></div>
+                <div class="fr2">
+                  <div class="fg"><label>Tipo</label>
+                    <select class="fi" id="contaTipo">
+                      <option value="corrente">Conta corrente</option>
+                      <option value="poupanca">Conta poupança</option>
+                      <option value="mbway">MB Way</option>
+                      <option value="cartao">Cartão de crédito</option>
+                      <option value="dinheiro">Dinheiro</option>
+                      <option value="outro">Outro</option>
+                    </select>
+                  </div>
+                  <div class="fg"><label>Cor</label><input class="fi" type="color" id="contaCor" value="#78a0ff"></div>
+                </div>
+                <div class="fg"><label>Saldo inicial (€)</label><input class="fi" type="number" id="contaSaldo" min="0" step="0.01" placeholder="0,00"></div>
+                <div class="fg"><label>Nota</label><input class="fi" type="text" id="contaNota" placeholder="Opcional..."></div>
+                <div style="display:flex;gap:.5rem;margin-top:.25rem;">
+                  <button class="btn-add" id="contaSaveBtn" onclick="saveConta()" style="flex:1;"><i class="ti ti-plus"></i><span id="contaSaveLbl">Adicionar conta</span></button>
+                  <button class="btn-cancel" id="contaCancelBtn" onclick="cancelConta()" style="display:none;flex:1;padding:.75rem;background:var(--ink3);color:var(--soft);border:1px solid var(--line2);border-radius:var(--r);font-family:Sora,sans-serif;font-size:.875rem;cursor:pointer;">Cancelar</button>
+                </div>
+              </div>
+
+              <!-- Form transferência -->
+              <div id="formTransf" style="display:none;">
+                <div class="card-head" style="margin-bottom:.75rem;"><span class="card-label">Nova transferência</span></div>
+                <div class="fg"><label>Da conta</label><select class="fi" id="transfDe"></select></div>
+                <div class="fg"><label>Para a conta</label><select class="fi" id="transfPara"></select></div>
+                <div class="fr2">
+                  <div class="fg"><label>Valor (€)</label><input class="fi" type="number" id="transfAmt" min="0" step="0.01" placeholder="0,00"></div>
+                  <div class="fg"><label>Data</label><input class="fi" type="date" id="transfDate"></div>
+                </div>
+                <div class="fg"><label>Nota</label><input class="fi" type="text" id="transfNota" placeholder="Opcional..."></div>
+                <button class="btn-add" onclick="saveTransf()" style="width:100%;margin-top:.25rem;"><i class="ti ti-arrows-transfer-up"></i>Transferir</button>
               </div>
             </div>
           </div>
@@ -1435,20 +1440,20 @@ window.cancelConta = function() {
   document.getElementById('contaCancelBtn').style.display = 'none';
 };
 
-window.openTransfModal = function() {
-  if (ACCOUNTS.length < 2) { alert('Precisas de pelo menos 2 contas para transferir.'); return; }
-  const de = document.getElementById('transfDe');
-  const para = document.getElementById('transfPara');
-  de.innerHTML = ACCOUNTS.map(a => `<option value="${a.id}">${a.nome} (${fmt(parseFloat(a.saldo)||0)})</option>`).join('');
-  para.innerHTML = ACCOUNTS.map((a, i) => `<option value="${a.id}"${i===1?' selected':''}>${a.nome} (${fmt(parseFloat(a.saldo)||0)})</option>`).join('');
-  document.getElementById('transfDate').value = new Date().toISOString().split('T')[0];
-  document.getElementById('transfModal').classList.add('open');
-};
-
-window.closeTransfModal = function() {
-  document.getElementById('transfModal').classList.remove('open');
-  document.getElementById('transfAmt').value = '';
-  document.getElementById('transfNota').value = '';
+window.switchContaTab = function(tab) {
+  const isConta = tab === 'conta';
+  document.getElementById('tabContaForm').classList.toggle('on', isConta);
+  document.getElementById('tabTransfForm').classList.toggle('on', !isConta);
+  document.getElementById('formConta').style.display = isConta ? '' : 'none';
+  document.getElementById('formTransf').style.display = isConta ? 'none' : '';
+  if (!isConta) {
+    // populate transfer selects
+    const de = document.getElementById('transfDe');
+    const para = document.getElementById('transfPara');
+    de.innerHTML = ACCOUNTS.map(a => `<option value="${a.id}">${a.nome} (${fmt(parseFloat(a.saldo)||0)})</option>`).join('');
+    para.innerHTML = ACCOUNTS.map((a, i) => `<option value="${a.id}"${i===1?' selected':''}>${a.nome} (${fmt(parseFloat(a.saldo)||0)})</option>`).join('');
+    document.getElementById('transfDate').value = new Date().toISOString().split('T')[0];
+  }
 };
 
 window.saveTransf = async function() {
@@ -1474,7 +1479,9 @@ window.saveTransf = async function() {
   const ref = await addDoc(transfersRef(), { de, para, amt, date, nota, deNome: accDe.nome, paraNome: accPara.nome });
   TRANSFERS.unshift({ id: ref.id, de, para, amt, date, nota, deNome: accDe.nome, paraNome: accPara.nome });
 
-  closeTransfModal();
+  // Reset transfer form
+  document.getElementById('transfAmt').value = '';
+  document.getElementById('transfNota').value = '';
   renderContas();
 };
 

@@ -582,6 +582,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
         <div class="topbar">
           <div><div class="page-title">Lucros</div><div class="page-sub">Registo de rendimentos e receitas</div></div>
           <div style="display:flex;align-items:center;gap:.5rem;">
+            <button class="btn-export" onclick="exportLucros()"><i class="ti ti-table-export"></i>Excel</button>
             <button class="mnav" onclick="changeLucroMonth(-1)"><i class="ti ti-chevron-left"></i></button>
             <span class="month-label" id="lucroMonthLabel">—</span>
             <button class="mnav" onclick="changeLucroMonth(1)"><i class="ti ti-chevron-right"></i></button>
@@ -1761,6 +1762,75 @@ function renderLucros() {
   }).join('') : '<div class="empty"><i class="ti ti-trending-up"></i>Sem lucros em ' + mNames[m-1] + '</div>';
 }
 
+
+window.exportLucros = function() {
+  const CAT_LABELS = { carregamentos: 'Carregamentos', salario: 'Salário', venda: 'Venda', freelance: 'Freelance', outro: 'Outro' };
+  const mNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  const sorted = [...LUCROS].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  if (!sorted.length) { alert('Sem dados para exportar.'); return; }
+
+  // ── Folha 1: Todos os registos (por carregamento/entrada) ──
+  const rowsDetalhes = sorted.map((l, i) => ({
+    'Nº': i + 1,
+    'Data': l.date || '',
+    'Descrição': l.desc || '',
+    'Categoria': CAT_LABELS[l.cat] || l.cat || '',
+    'Valor (€)': parseFloat(l.amt) || 0,
+    'Nota': l.nota || ''
+  }));
+
+  // ── Folha 2: Por mês ──
+  const porMes = {};
+  sorted.forEach(l => {
+    const mes = (l.date || '').slice(0, 7); // yyyy-mm
+    if (!porMes[mes]) porMes[mes] = { entradas: 0, total: 0 };
+    porMes[mes].entradas++;
+    porMes[mes].total += parseFloat(l.amt) || 0;
+  });
+  const rowsMes = Object.entries(porMes)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([mes, d]) => {
+      const [y, m] = mes.split('-').map(Number);
+      return {
+        'Mês': mNames[m - 1] + ' ' + y,
+        'Nº Entradas': d.entradas,
+        'Total (€)': d.total
+      };
+    });
+  rowsMes.push({ 'Mês': 'TOTAL', 'Nº Entradas': sorted.length, 'Total (€)': sorted.reduce((s, l) => s + (parseFloat(l.amt) || 0), 0) });
+
+  // ── Folha 3: Resumo por categoria ──
+  const porCat = {};
+  sorted.forEach(l => {
+    const c = CAT_LABELS[l.cat] || l.cat || 'Outro';
+    if (!porCat[c]) porCat[c] = { entradas: 0, total: 0 };
+    porCat[c].entradas++;
+    porCat[c].total += parseFloat(l.amt) || 0;
+  });
+  const rowsCat = Object.entries(porCat).map(([cat, d]) => ({
+    'Categoria': cat,
+    'Nº Entradas': d.entradas,
+    'Total (€)': d.total
+  }));
+  rowsCat.push({ 'Categoria': 'TOTAL', 'Nº Entradas': sorted.length, 'Total (€)': sorted.reduce((s, l) => s + (parseFloat(l.amt) || 0), 0) });
+
+  const wb = XLSX.utils.book_new();
+
+  const ws1 = XLSX.utils.json_to_sheet(rowsDetalhes);
+  ws1['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 30 }, { wch: 16 }, { wch: 12 }, { wch: 25 }];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Por Entrada');
+
+  const ws2 = XLSX.utils.json_to_sheet(rowsMes);
+  ws2['!cols'] = [{ wch: 18 }, { wch: 14 }, { wch: 12 }];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Por Mês');
+
+  const ws3 = XLSX.utils.json_to_sheet(rowsCat);
+  ws3['!cols'] = [{ wch: 18 }, { wch: 14 }, { wch: 12 }];
+  XLSX.utils.book_append_sheet(wb, ws3, 'Por Categoria');
+
+  XLSX.writeFile(wb, `fluxo_lucros_${new Date().toISOString().slice(0,7)}.xlsx`);
+};
 
 </script>
 </body>

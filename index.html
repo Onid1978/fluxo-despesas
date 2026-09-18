@@ -43,6 +43,8 @@ body{font-family:'Sora',sans-serif;background:var(--ink);color:var(--body);min-h
 #loginScreen::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,black 40%,transparent 100%);}
 .login-box{width:100%;max-width:400px;background:var(--ink2);border:1px solid var(--line2);border-radius:20px;padding:2.5rem 2rem;position:relative;z-index:1;}
 .login-mark{display:flex;align-items:center;justify-content:center;margin-bottom:2rem;}
+[data-theme="light"]{--ink:#f0f0f2;--ink2:#ffffff;--ink3:#e8e8ec;--line:#dadadf;--line2:#c8c8d0;--head:#111114;--soft:#2d2d35;--muted:#5a5a68;--dim:#8a8a98;}
+[data-theme="light"] body{background:var(--ink);color:var(--soft);}
 .mark-ring{width:64px;height:64px;border:2px solid var(--lime);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;color:var(--lime);box-shadow:0 0 32px rgba(232,255,71,0.15),inset 0 0 20px rgba(232,255,71,0.05);position:relative;}
 .mark-ring::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(232,255,71,0.12);}
 .login-heading{text-align:center;margin-bottom:2rem;}
@@ -280,6 +282,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
   .mpill{min-width:120px;}
   .kpi-val{font-size:1.2rem;}
 }
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.8;transform:scale(1.05);}}
 </style>
 </head>
 <body>
@@ -367,6 +370,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
           <div class="sb-avatar" id="userAvatar">?</div>
           <span class="sb-uname" id="sbUser">—</span>
         </div>
+        <button onclick="toggleTheme()" id="themeBtn" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:.45rem .75rem;font-family:Sora,sans-serif;font-size:.78rem;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:.4rem;margin-bottom:.5rem;width:100%;justify-content:center;"><i class="ti ti-sun" id="themeIcon"></i><span id="themeLbl">Tema claro</span></button>
         <button class="btn-out" onclick="doLogout()"><i class="ti ti-logout"></i>Terminar sessão</button>
       </div>
     </aside>
@@ -404,8 +408,10 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
         </div>
         <div class="kpis">
           <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Total gasto</span><div class="kpi-ico" style="background:rgba(232,255,71,.08);"><i class="ti ti-credit-card" style="color:var(--lime);"></i></div></div><div class="kpi-val" id="metTotal">0,00 €</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--lime),transparent);"></div></div>
-          <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Nº despesas</span><div class="kpi-ico" style="background:rgba(120,160,255,.08);"><i class="ti ti-list" style="color:var(--blue);"></i></div></div><div class="kpi-val" id="metCount">0</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--blue),transparent);"></div></div>
-          <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Média</span><div class="kpi-ico" style="background:rgba(255,190,100,.08);"><i class="ti ti-calculator" style="color:var(--amber);"></i></div></div><div class="kpi-val" id="metAvg">0,00 €</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--amber),transparent);"></div></div>
+          <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Total lucros</span><div class="kpi-ico" style="background:rgba(52,211,153,.08);"><i class="ti ti-trending-up" style="color:#34d399;"></i></div></div><div class="kpi-val" id="metLucros" style="color:#34d399;">0,00 €</div><div class="kpi-accent" style="background:linear-gradient(90deg,#34d399,transparent);"></div></div>
+          <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Saldo líquido</span><div class="kpi-ico" style="background:rgba(120,160,255,.08);"><i class="ti ti-scale" style="color:var(--blue);"></i></div></div><div class="kpi-val" id="metSaldo">—</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--blue),transparent);"></div></div>
+          <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Nº despesas</span><div class="kpi-ico" style="background:rgba(255,190,100,.08);"><i class="ti ti-list" style="color:var(--amber);"></i></div></div><div class="kpi-val" id="metCount">0</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--amber),transparent);"></div></div>
+          <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Média</span><div class="kpi-ico" style="background:rgba(120,160,255,.08);"><i class="ti ti-calculator" style="color:var(--blue);"></i></div></div><div class="kpi-val" id="metAvg">0,00 €</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--blue),transparent);"></div></div>
           <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Maior categoria</span><div class="kpi-ico" style="background:rgba(255,130,130,.08);"><i class="ti ti-tag" style="color:var(--red);"></i></div></div><div class="kpi-val word" id="metTop">—</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--red),transparent);"></div></div>
         </div>
         <!-- CONTAS NO DASHBOARD -->
@@ -589,7 +595,8 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
       <div class="page" id="p-lucros">
         <div class="topbar">
           <div><div class="page-title">Lucros</div><div class="page-sub">Registo de rendimentos e receitas</div></div>
-          <div style="display:flex;align-items:center;gap:.5rem;">
+          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+            <input class="fi" type="text" id="lucroSearch" placeholder="🔍 Pesquisar..." oninput="renderLucros()" style="width:160px;padding:.4rem .7rem;font-size:.8rem;">
             <button class="btn-export" onclick="exportLucros()"><i class="ti ti-table-export"></i>Excel</button>
             <button class="mnav" onclick="changeLucroMonth(-1)"><i class="ti ti-chevron-left"></i></button>
             <span class="month-label" id="lucroMonthLabel">—</span>
@@ -893,6 +900,7 @@ async function loadRemainingData(skipK1, skipK2) {
 
   // Atualiza UI com dados completos
   renderAll();
+  checkCommitmentNotifications();
 }
 
 // ─── AUTH FUNÇÕES ─────────────────────────────────────────────────────────────
@@ -1323,6 +1331,14 @@ function renderDashboard() {
   document.getElementById('metTotal').textContent = fmt(total);
   document.getElementById('metCount').textContent = count;
   document.getElementById('metAvg').textContent = count ? fmt(total / count) : '0,00 €';
+  // Lucros e saldo líquido do mês
+  const lucrosMes = LUCROS.filter(l => l.date && l.date.startsWith(k));
+  const totalLucros = lucrosMes.reduce((s,l) => s + (parseFloat(l.amt)||0), 0);
+  const saldoLiq = totalLucros - total;
+  const metLucrosEl = document.getElementById('metLucros');
+  const metSaldoEl = document.getElementById('metSaldo');
+  if (metLucrosEl) metLucrosEl.textContent = fmt(totalLucros);
+  if (metSaldoEl) { metSaldoEl.textContent = fmt(saldoLiq); metSaldoEl.style.color = saldoLiq >= 0 ? '#34d399' : '#ff6b7a'; }
 
   const cmps = COMMITMENTS.filter(c => c.active !== false);
   const cmpTotal = cmps.reduce((s, c) => s + c.amt, 0);
@@ -1395,6 +1411,7 @@ function renderDespesas() {
 
 // ─── RENDER ANÁLISE ───────────────────────────────────────────────────────────
 function renderAnalise() {
+  renderLucrosDespChart(ANAL_Y);
   document.getElementById('analYearLabel').textContent = String(ANAL_Y);
   const months = Array.from({ length: 12 }, (_, m) => gmd(ANAL_Y, m));
   const totals = months.map(m => m.expenses.reduce((s, e) => s + e.amt, 0));
@@ -1693,6 +1710,7 @@ function renderContas() {
           <div style="font-size:.68rem;color:var(--muted);">${movs.length} mov.</div>
         </div>
         <div style="display:flex;gap:.25rem;">
+          <button onclick="editSaldo('${a.id}')" title="Editar saldo" style="background:none;border:1px solid var(--line2);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#34d399;"><i class="ti ti-coin" style="font-size:.8rem;"></i></button>
           <button onclick="editConta('${a.id}')" style="background:none;border:1px solid var(--line2);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);"><i class="ti ti-pencil" style="font-size:.8rem;"></i></button>
           <button onclick="deleteConta('${a.id}')" style="background:none;border:1px solid var(--line2);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;"><i class="ti ti-trash" style="font-size:.8rem;color:#ff6b7a;"></i></button>
         </div>
@@ -1862,7 +1880,9 @@ function renderLucros() {
   saldoEl.style.color = saldo >= 0 ? '#34d399' : '#ff6b7a';
 
   // List
-  const sorted = [...mes].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const q = (document.getElementById('lucroSearch')?.value || '').toLowerCase();
+  const filtered = mes.filter(l => !q || l.desc.toLowerCase().includes(q) || (l.nota||'').toLowerCase().includes(q) || (l.cat||'').toLowerCase().includes(q));
+  const sorted = [...filtered].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   document.getElementById('lucroList').innerHTML = sorted.length ? sorted.map(l => {
     const icon = CAT_LUCRO_ICONS[l.cat] || 'ti-coin';
     const label = CAT_LUCRO_LABELS[l.cat] || 'Outro';
@@ -1952,6 +1972,189 @@ window.exportLucros = function() {
 
   XLSX.writeFile(wb, `fluxo_lucros_${new Date().toISOString().slice(0,7)}.xlsx`);
 };
+
+// ═══════════════════════════════════════════════════════════════
+// DARK/LIGHT MODE
+// ═══════════════════════════════════════════════════════════════
+window.toggleTheme = function() {
+  const html = document.documentElement;
+  const isLight = html.getAttribute('data-theme') === 'light';
+  const newTheme = isLight ? 'dark' : 'light';
+  html.setAttribute('data-theme', newTheme);
+  localStorage.setItem('fluxo-theme', newTheme);
+  document.getElementById('themeIcon').className = isLight ? 'ti ti-sun' : 'ti ti-moon';
+  document.getElementById('themeLbl').textContent = isLight ? 'Tema claro' : 'Tema escuro';
+};
+(function() {
+  const saved = localStorage.getItem('fluxo-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  window.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('themeIcon');
+    const lbl = document.getElementById('themeLbl');
+    if (btn) btn.className = saved === 'light' ? 'ti ti-moon' : 'ti ti-sun';
+    if (lbl) lbl.textContent = saved === 'light' ? 'Tema escuro' : 'Tema claro';
+  });
+})();
+
+// ═══════════════════════════════════════════════════════════════
+// UNDO (toast com desfazer)
+// ═══════════════════════════════════════════════════════════════
+let _undoTimer = null;
+let _undoAction = null;
+function showUndo(msg, undoFn) {
+  clearTimeout(_undoTimer);
+  _undoAction = undoFn;
+  let toast = document.getElementById('undoToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'undoToast';
+    toast.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#222;color:#fff;border-radius:10px;padding:.65rem 1.25rem;display:flex;align-items:center;gap:1rem;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,.4);font-size:.85rem;font-family:Sora,sans-serif;';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<span>${msg}</span><button onclick="doUndo()" style="background:var(--lime);color:#111;border:none;border-radius:6px;padding:.3rem .75rem;font-size:.8rem;font-family:Sora,sans-serif;font-weight:600;cursor:pointer;">Desfazer</button>`;
+  toast.style.display = 'flex';
+  _undoTimer = setTimeout(() => { toast.style.display = 'none'; _undoAction = null; }, 5000);
+}
+window.doUndo = function() {
+  clearTimeout(_undoTimer);
+  if (_undoAction) { _undoAction(); _undoAction = null; }
+  const toast = document.getElementById('undoToast');
+  if (toast) toast.style.display = 'none';
+};
+
+// ═══════════════════════════════════════════════════════════════
+// NOTIFICAÇÕES DE COMPROMISSOS
+// ═══════════════════════════════════════════════════════════════
+function checkCommitmentNotifications() {
+  if (!('Notification' in window)) return;
+  const today = new Date();
+  const todayDay = today.getDate();
+  const upcoming = COMMITMENTS.filter(c => !c.paused && c.day && Math.abs(parseInt(c.day) - todayDay) <= 3);
+  if (!upcoming.length) return;
+  if (Notification.permission === 'granted') {
+    upcoming.forEach(c => {
+      const diff = parseInt(c.day) - todayDay;
+      const when = diff === 0 ? 'hoje' : diff > 0 ? `em ${diff} dia(s)` : `há ${Math.abs(diff)} dia(s)`;
+      new Notification('Fluxo — Compromisso', { body: `${c.name}: ${fmt(parseFloat(c.amt)||0)} — vence ${when}`, icon: 'icon-192.png' });
+    });
+  } else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then(p => { if (p === 'granted') checkCommitmentNotifications(); });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORTAR TUDO
+// ═══════════════════════════════════════════════════════════════
+window.exportTudo = function() {
+  const wb = XLSX.utils.book_new();
+  const mNames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const CAT_LABELS = { carregamentos:'Carregamentos', salario:'Salário', venda:'Venda', freelance:'Freelance', outro:'Outro' };
+
+  // Folha despesas
+  const despRows = [];
+  Object.entries(DATA).sort(([a],[b])=>a.localeCompare(b)).forEach(([k,d]) => {
+    (d.expenses||[]).forEach(e => {
+      const acc = ACCOUNTS.find(a => a.id === e.contaId);
+      despRows.push({ 'Data': e.date, 'Descrição': e.desc, 'Categoria': e.cat||'', 'Valor (€)': parseFloat(e.amt)||0, 'Conta': acc ? acc.nome : '', 'Nota': e.nota||'' });
+    });
+  });
+  if (despRows.length) {
+    const ws = XLSX.utils.json_to_sheet(despRows);
+    ws['!cols'] = [{wch:12},{wch:28},{wch:14},{wch:10},{wch:18},{wch:22}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Despesas');
+  }
+
+  // Folha lucros
+  const lucroRows = [...LUCROS].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(l => {
+    const acc = ACCOUNTS.find(a => a.id === l.contaId);
+    return { 'Data': l.date, 'Descrição': l.desc, 'Categoria': CAT_LABELS[l.cat]||l.cat||'', 'Valor (€)': parseFloat(l.amt)||0, 'Conta': acc ? acc.nome : '', 'Nota': l.nota||'' };
+  });
+  if (lucroRows.length) {
+    const ws2 = XLSX.utils.json_to_sheet(lucroRows);
+    ws2['!cols'] = [{wch:12},{wch:28},{wch:14},{wch:10},{wch:18},{wch:22}];
+    XLSX.utils.book_append_sheet(wb, ws2, 'Lucros');
+  }
+
+  // Folha contas
+  const contaRows = ACCOUNTS.map(a => ({ 'Nome': a.nome, 'Tipo': a.tipo, 'Saldo (€)': parseFloat(a.saldo)||0, 'Nota': a.nota||'' }));
+  if (contaRows.length) {
+    const ws3 = XLSX.utils.json_to_sheet(contaRows);
+    ws3['!cols'] = [{wch:20},{wch:12},{wch:12},{wch:25}];
+    XLSX.utils.book_append_sheet(wb, ws3, 'Contas');
+  }
+
+  // Folha resumo mensal
+  const months = {};
+  Object.entries(DATA).forEach(([k,d]) => {
+    const desp = (d.expenses||[]).reduce((s,e)=>s+(parseFloat(e.amt)||0),0);
+    if (desp > 0) months[k] = { ...months[k], desp };
+  });
+  LUCROS.forEach(l => {
+    const k = (l.date||'').slice(0,7);
+    if (k) months[k] = { ...months[k], lucro: (months[k]?.lucro||0) + (parseFloat(l.amt)||0) };
+  });
+  const resumoRows = Object.entries(months).sort(([a],[b])=>a.localeCompare(b)).map(([k,v]) => {
+    const [y,m] = k.split('-').map(Number);
+    return { 'Mês': mNames[m-1]+' '+y, 'Lucros (€)': v.lucro||0, 'Despesas (€)': v.desp||0, 'Saldo (€)': (v.lucro||0)-(v.desp||0) };
+  });
+  if (resumoRows.length) {
+    const ws4 = XLSX.utils.json_to_sheet(resumoRows);
+    ws4['!cols'] = [{wch:14},{wch:12},{wch:14},{wch:12}];
+    XLSX.utils.book_append_sheet(wb, ws4, 'Resumo Mensal');
+  }
+
+  if (!wb.SheetNames.length) { alert('Sem dados para exportar.'); return; }
+  XLSX.writeFile(wb, `fluxo_completo_${new Date().toISOString().slice(0,7)}.xlsx`);
+};
+
+// ═══════════════════════════════════════════════════════════════
+// GRÁFICO LUCROS VS DESPESAS (Análise)
+// ═══════════════════════════════════════════════════════════════
+let lucrosDespChartInst = null;
+function renderLucrosDespChart(year) {
+  const canvas = document.getElementById('lucrosDespChart');
+  if (!canvas) return;
+  const mNames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const despData = Array(12).fill(0);
+  const lucroData = Array(12).fill(0);
+  Object.entries(DATA).forEach(([k,d]) => {
+    const [y,m] = k.split('-').map(Number);
+    if (y === year) despData[m-1] = (d.expenses||[]).reduce((s,e)=>s+(parseFloat(e.amt)||0),0);
+  });
+  LUCROS.forEach(l => {
+    const [y,m] = (l.date||'').slice(0,7).split('-').map(Number);
+    if (y === year) lucroData[m-1] += parseFloat(l.amt)||0;
+  });
+  if (lucrosDespChartInst) lucrosDespChartInst.destroy();
+  lucrosDespChartInst = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: mNames,
+      datasets: [
+        { label: 'Lucros', data: lucroData, backgroundColor: 'rgba(52,211,153,.7)', borderRadius: 5 },
+        { label: 'Despesas', data: despData, backgroundColor: 'rgba(255,107,122,.7)', borderRadius: 5 }
+      ]
+    },
+    options: { responsive: true, plugins: { legend: { labels: { color: '#aaa', font: { family: 'Sora' } } } }, scales: { x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,.05)' } }, y: { ticks: { color: '#888', callback: v => v+'€' }, grid: { color: 'rgba(255,255,255,.05)' } } } }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EDITAR SALDO DA CONTA MANUALMENTE
+// ═══════════════════════════════════════════════════════════════
+window.editSaldo = async function(id) {
+  const acc = ACCOUNTS.find(a => a.id === id);
+  if (!acc) return;
+  const novo = prompt(`Saldo actual: ${fmt(parseFloat(acc.saldo)||0)}\nNovo saldo (€):`, parseFloat(acc.saldo)||0);
+  if (novo === null) return;
+  const val = parseFloat(novo.replace(',','.'));
+  if (isNaN(val)) { alert('Valor inválido.'); return; }
+  acc.saldo = val;
+  await updateDoc(doc(db, 'users', CU.uid, 'accounts', id), { saldo: val });
+  renderContas();
+  renderDashboardContas();
+};
+
 
 </script>
 </body>

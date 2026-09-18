@@ -618,6 +618,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
                   <option value="outro">Outro</option>
                 </select>
               </div>
+              <div class="fg"><label>Conta</label><select class="fi" id="lucroContaInput"><option value="">— Sem conta —</option></select></div>
               <div class="fg"><label>Nota</label><input class="fi" type="text" id="lucroNota" placeholder="Opcional..."></div>
               <div style="display:flex;gap:.5rem;margin-top:.25rem;">
                 <button class="btn-add" id="lucroSaveBtn" onclick="saveLucro()" style="flex:1;background:linear-gradient(135deg,#34d399,#059669);"><i class="ti ti-plus"></i><span id="lucroSaveLbl">Adicionar lucro</span></button>
@@ -1596,29 +1597,79 @@ function renderContas() {
   const sel = document.getElementById('expContaInput');
   if (sel) {
     const prev = sel.value;
-    sel.innerHTML = '<option value="">Sem conta específica</option>' +
-      ACCOUNTS.map(a => `<option value="${a.id}"${a.id===prev?' selected':''}>${a.nome}</option>`).join('');
+    sel.innerHTML = '<option value="">— Sem conta —</option>' +
+      ACCOUNTS.map(a => `<option value="${a.id}"${a.id===prev?' selected':''}>${a.nome} (${fmt(parseFloat(a.saldo)||0)})</option>`).join('');
   }
 
-  // Lista de contas
+  // Atualiza selector de conta nos lucros
+  const selLucro = document.getElementById('lucroContaInput');
+  if (selLucro) {
+    const prevL = selLucro.value;
+    selLucro.innerHTML = '<option value="">— Sem conta —</option>' +
+      ACCOUNTS.map(a => `<option value="${a.id}"${a.id===prevL?' selected':''}>${a.nome} (${fmt(parseFloat(a.saldo)||0)})</option>`).join('');
+  }
+
+  // Recolhe todos os movimentos por conta
+  function getMovimentos(accId) {
+    const movs = [];
+    // Despesas
+    Object.entries(DATA).forEach(([k, d]) => {
+      (d.expenses || []).forEach(e => {
+        if (e.contaId === accId) movs.push({ date: e.date, desc: e.desc, amt: -(parseFloat(e.amt)||0), tipo: 'despesa' });
+      });
+    });
+    // Lucros
+    LUCROS.forEach(l => {
+      if (l.contaId === accId) movs.push({ date: l.date, desc: l.desc, amt: parseFloat(l.amt)||0, tipo: 'lucro' });
+    });
+    // Transferências
+    TRANSFERS.forEach(t => {
+      if (t.de === accId) movs.push({ date: t.date, desc: `→ ${t.paraNome}`, amt: -(parseFloat(t.amt)||0), tipo: 'transf' });
+      if (t.para === accId) movs.push({ date: t.date, desc: `← ${t.deNome}`, amt: parseFloat(t.amt)||0, tipo: 'transf' });
+    });
+    return movs.sort((a, b) => (b.date||'').localeCompare(a.date||''));
+  }
+
+  // Lista de contas com movimentos
   document.getElementById('contasList').innerHTML = ACCOUNTS.length ? ACCOUNTS.map(a => {
     const saldo = parseFloat(a.saldo) || 0;
     const icon = TIPO_ICONS[a.tipo] || 'ti-wallet';
     const label = TIPO_LABELS[a.tipo] || 'Outro';
-    return `<div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--line);">
-      <div style="width:40px;height:40px;border-radius:10px;background:${a.cor}22;border:1px solid ${a.cor}44;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <i class="ti ${icon}" style="color:${a.cor};font-size:1.1rem;"></i>
+    const movs = getMovimentos(a.id);
+    const movsHtml = movs.length ? movs.slice(0, 10).map(mv => {
+      const isPos = mv.amt >= 0;
+      const mvIcon = mv.tipo === 'lucro' ? 'ti-trending-up' : mv.tipo === 'transf' ? 'ti-arrows-transfer-up' : 'ti-minus';
+      const mvColor = isPos ? '#34d399' : '#ff6b7a';
+      return `<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--line);">
+        <i class="ti ${mvIcon}" style="color:${mvColor};font-size:.8rem;flex-shrink:0;"></i>
+        <span style="flex:1;font-size:.76rem;color:var(--soft);">${mv.desc}</span>
+        <span style="font-size:.72rem;color:var(--muted);margin-right:.4rem;">${fd(mv.date)}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:600;color:${mvColor};">${isPos?'+':''}${fmt(Math.abs(mv.amt))}</span>
+      </div>`;
+    }).join('') : `<div style="font-size:.75rem;color:var(--muted);padding:.5rem 0;">Sem movimentos registados</div>`;
+
+    return `<div style="border:1px solid var(--line2);border-radius:12px;padding:.85rem;margin-bottom:.75rem;">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.6rem;">
+        <div style="width:40px;height:40px;border-radius:10px;background:${a.cor}22;border:1px solid ${a.cor}44;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ${icon}" style="color:${a.cor};font-size:1.1rem;"></i>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.88rem;font-weight:500;color:var(--head);">${a.nome}</div>
+          <div style="font-size:.7rem;color:var(--muted);">${label}${a.nota ? ' · ' + a.nota : ''}</div>
+        </div>
+        <div style="text-align:right;margin-right:.35rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:1rem;font-weight:700;color:${saldo < 0 ? '#ff6b7a' : '#34d399'};">${fmt(saldo)}</div>
+          <div style="font-size:.68rem;color:var(--muted);">${movs.length} mov.</div>
+        </div>
+        <div style="display:flex;gap:.25rem;">
+          <button onclick="editConta('${a.id}')" style="background:none;border:1px solid var(--line2);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);"><i class="ti ti-pencil" style="font-size:.8rem;"></i></button>
+          <button onclick="deleteConta('${a.id}')" style="background:none;border:1px solid var(--line2);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;"><i class="ti ti-trash" style="font-size:.8rem;color:#ff6b7a;"></i></button>
+        </div>
       </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:.88rem;font-weight:500;color:var(--head);margin-bottom:.15rem;">${a.nome}</div>
-        <div style="font-size:.72rem;color:var(--muted);">${label}${a.nota ? ' · ' + a.nota : ''}</div>
-      </div>
-      <div style="text-align:right;margin-right:.5rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.95rem;font-weight:600;color:${saldo < 0 ? '#ff6b7a' : '#34d399'};">${fmt(saldo)}</div>
-      </div>
-      <div style="display:flex;gap:.25rem;">
-        <button onclick="editConta('${a.id}')" style="background:none;border:1px solid var(--line2);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);"><i class="ti ti-pencil" style="font-size:.8rem;"></i></button>
-        <button onclick="deleteConta('${a.id}')" style="background:none;border:1px solid var(--line2);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ff6b7a44;"><i class="ti ti-trash" style="font-size:.8rem;color:#ff6b7a;"></i></button>
+      <div style="border-top:1px solid var(--line);padding-top:.5rem;">
+        <div style="font-size:.7rem;color:var(--muted);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.05em;">Movimentos recentes</div>
+        ${movsHtml}
+        ${movs.length > 10 ? `<div style="font-size:.7rem;color:var(--muted);padding-top:.4rem;">+${movs.length-10} movimentos anteriores</div>` : ''}
       </div>
     </div>`;
   }).join('') : '<div class="empty"><i class="ti ti-building-bank"></i>Sem contas adicionadas</div>';
@@ -1664,17 +1715,28 @@ window.saveLucro = async function() {
   const nota = document.getElementById('lucroNota').value.trim();
   if (!desc || isNaN(amt) || amt <= 0 || !date) return;
 
+  const contaId = document.getElementById('lucroContaInput')?.value || '';
+
   if (LUCRO_EDIT_ID) {
-    await updateDoc(doc(db, 'users', CU.uid, 'lucros', LUCRO_EDIT_ID), { desc, amt, date, cat, nota });
+    await updateDoc(doc(db, 'users', CU.uid, 'lucros', LUCRO_EDIT_ID), { desc, amt, date, cat, nota, contaId });
     const idx = LUCROS.findIndex(l => l.id === LUCRO_EDIT_ID);
-    if (idx >= 0) LUCROS[idx] = { ...LUCROS[idx], desc, amt, date, cat, nota };
+    if (idx >= 0) LUCROS[idx] = { ...LUCROS[idx], desc, amt, date, cat, nota, contaId };
     cancelLucro();
   } else {
-    const ref = await addDoc(lucrosRef(), { desc, amt, date, cat, nota });
-    LUCROS.push({ id: ref.id, desc, amt, date, cat, nota });
+    // Acrescenta à conta selecionada
+    if (contaId) {
+      const acc = ACCOUNTS.find(a => a.id === contaId);
+      if (acc) {
+        acc.saldo = (parseFloat(acc.saldo) || 0) + amt;
+        await updateDoc(doc(db, 'users', CU.uid, 'accounts', contaId), { saldo: acc.saldo });
+      }
+    }
+    const ref = await addDoc(lucrosRef(), { desc, amt, date, cat, nota, contaId });
+    LUCROS.push({ id: ref.id, desc, amt, date, cat, nota, contaId });
     cancelLucro();
   }
   renderLucros();
+  renderContas();
 };
 
 window.editLucro = function(id) {

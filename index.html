@@ -408,6 +408,14 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
           <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Média</span><div class="kpi-ico" style="background:rgba(255,190,100,.08);"><i class="ti ti-calculator" style="color:var(--amber);"></i></div></div><div class="kpi-val" id="metAvg">0,00 €</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--amber),transparent);"></div></div>
           <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Maior categoria</span><div class="kpi-ico" style="background:rgba(255,130,130,.08);"><i class="ti ti-tag" style="color:var(--red);"></i></div></div><div class="kpi-val word" id="metTop">—</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--red),transparent);"></div></div>
         </div>
+        <!-- CONTAS NO DASHBOARD -->
+        <div id="db-contas-widget" style="display:none;margin-bottom:1.5rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
+            <span style="font-size:.7rem;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;">As minhas contas</span>
+            <button onclick="goPage('contas')" style="background:none;border:none;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:Sora,sans-serif;">Ver todas →</button>
+          </div>
+          <div id="db-contas-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.65rem;"></div>
+        </div>
         <div class="grid2">
           <div>
             <div class="card">
@@ -1283,6 +1291,28 @@ window.exportAnalise = function() {
 };
 
 // ─── RENDER DASHBOARD ─────────────────────────────────────────────────────────
+function renderDashboardContas() {
+  const widget = document.getElementById('db-contas-widget');
+  const list = document.getElementById('db-contas-list');
+  if (!widget || !list) return;
+  if (!ACCOUNTS.length) { widget.style.display = 'none'; return; }
+  widget.style.display = '';
+  const TIPO_ICONS = { corrente: 'ti-building-bank', poupanca: 'ti-piggy-bank', mbway: 'ti-device-mobile', cartao: 'ti-credit-card', dinheiro: 'ti-coins', outro: 'ti-wallet' };
+  list.innerHTML = ACCOUNTS.map(a => {
+    const saldo = parseFloat(a.saldo) || 0;
+    const icon = TIPO_ICONS[a.tipo] || 'ti-wallet';
+    return `<div onclick="goPage('contas')" style="background:var(--ink2);border:1px solid var(--line);border-radius:12px;padding:.85rem;cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='${a.cor}'" onmouseout="this.style.borderColor='var(--line)'">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+        <div style="width:28px;height:28px;border-radius:7px;background:${a.cor}22;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ${icon}" style="color:${a.cor};font-size:.85rem;"></i>
+        </div>
+        <span style="font-size:.78rem;font-weight:500;color:var(--head);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.nome}</span>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:1rem;font-weight:700;color:${saldo < 0 ? '#ff6b7a' : '#34d399'};">${fmt(saldo)}</div>
+    </div>`;
+  }).join('');
+}
+
 function renderDashboard() {
   const md = gmd();
   document.getElementById('monthLabel').textContent = MO[CM] + ' ' + CY;
@@ -1474,6 +1504,7 @@ function renderDefinicoes() {
 function renderAll() {
   renderDashboard();
   renderContas(); // atualiza saldos e selector de conta sempre
+  renderDashboardContas();
   if (document.getElementById('p-lucros').classList.contains('active')) renderLucros();
   if (document.getElementById('p-compromissos').classList.contains('active')) renderCompromissos();
   if (document.getElementById('p-despesas').classList.contains('active')) renderDespesas();
@@ -1685,9 +1716,37 @@ function renderContas() {
         <div style="font-size:.82rem;color:var(--head);">${t.deNome} → ${t.paraNome}</div>
         <div style="font-size:.7rem;color:var(--muted);">${fd(t.date)}${t.nota ? ' · ' + t.nota : ''}</div>
       </div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:var(--blue);">${fmt(t.amt)}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:var(--blue);margin-right:.4rem;">${fmt(t.amt)}</div>
+      <button onclick="deleteTransf('${t.id}')" style="background:none;border:1px solid var(--line2);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+        <i class="ti ti-trash" style="font-size:.8rem;color:#ff6b7a;"></i>
+      </button>
     </div>`).join('') : '<div class="empty"><i class="ti ti-arrows-transfer-up"></i>Sem transferências</div>';
 }
+
+window.deleteTransf = async function(id) {
+  const t = TRANSFERS.find(t => t.id === id);
+  if (!t) return;
+  if (!confirm(`Apagar transferência de ${fmt(t.amt)} de "${t.deNome}" para "${t.paraNome}"?
+
+Os saldos das contas serão revertidos.`)) return;
+
+  // Reverter saldos
+  const accDe = ACCOUNTS.find(a => a.id === t.de);
+  const accPara = ACCOUNTS.find(a => a.id === t.para);
+  if (accDe) {
+    accDe.saldo = (parseFloat(accDe.saldo) || 0) + parseFloat(t.amt);
+    await updateDoc(doc(db, 'users', CU.uid, 'accounts', t.de), { saldo: accDe.saldo });
+  }
+  if (accPara) {
+    accPara.saldo = (parseFloat(accPara.saldo) || 0) - parseFloat(t.amt);
+    await updateDoc(doc(db, 'users', CU.uid, 'accounts', t.para), { saldo: accPara.saldo });
+  }
+
+  // Apagar transferência
+  await deleteDoc(doc(db, 'users', CU.uid, 'transfers', id));
+  TRANSFERS = TRANSFERS.filter(t => t.id !== id);
+  renderContas();
+};
 
 
 </script>

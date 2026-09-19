@@ -279,16 +279,87 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
 
 /* MOBILE */
 @media(max-width:700px){
+  /* ── Layout ── */
   .mobile-top{display:flex;}
-  .sb{position:fixed;top:0;left:0;height:100vh;transform:translateX(-100%);border-right:1px solid var(--line2);}
-  .sb.open{transform:translateX(0);}
+  .sb{position:fixed;top:0;left:0;height:100vh;transform:translateX(-100%);border-right:1px solid var(--line2);z-index:300;}
+  .sb.open{transform:translateX(0);box-shadow:0 0 0 100vw rgba(0,0,0,.6);}
   .sb-close{display:block;}
   .shell{flex-direction:column;}
-  .content{padding:1rem;}
-  .mpill{min-width:120px;}
-  .kpi-val{font-size:1.2rem;}
+  .content{padding:.75rem .75rem 5rem;}
+
+  /* ── Bottom nav bar ── */
+  .bottom-nav{display:flex !important;}
+
+  /* ── KPIs: 2 por linha ── */
+  .kpis{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem;}
+  .kpi{padding:1rem;}
+  .kpi-val{font-size:1.15rem;}
+  .kpi-tag{font-size:.62rem;}
+
+  /* ── Cards ── */
+  .card{padding:1rem;margin-bottom:10px;}
+  .grid2{grid-template-columns:1fr;gap:0;}
+
+  /* ── Topbar ── */
+  .topbar{flex-direction:column;align-items:flex-start;gap:.65rem;margin-bottom:1rem;}
+  .topbar > div:last-child{width:100%;justify-content:space-between;}
+  .mpill{min-width:0;flex:1;text-align:center;}
+  .month-label{flex:1;text-align:center;min-width:0;}
+
+  /* ── Formulários ── */
+  .fi{padding:.75rem 1rem;font-size:1rem;}
+  .fg label{font-size:.7rem;}
+  .fr2,.fr3{grid-template-columns:1fr;}
+
+  /* ── Botões maiores para toque ── */
+  .btn-add{padding:1rem;font-size:.95rem;border-radius:12px;}
+  .btn-login{padding:1rem;font-size:.95rem;}
+  .btn-out{padding:.75rem;}
+  .btn-sm{padding:.5rem .9rem;font-size:.8rem;}
+  .btn-export{padding:.5rem .9rem;font-size:.8rem;}
+
+  /* ── Pesquisa ── */
+  #lucroSearch{width:100% !important;font-size:.95rem;padding:.65rem .9rem;}
+
+  /* ── Login ── */
+  .login-box{padding:2rem 1.25rem;border-radius:18px;}
+  .login-mark img{width:70px;height:70px;}
+
+  /* ── Expenses list ── */
+  .elist-name{font-size:.9rem;}
+  .elist-amt{font-size:.9rem;}
+
+  /* ── Page title ── */
+  .page-title{font-size:1.2rem;}
+
+  /* ── Commit items ── */
+  .cmp-item{flex-wrap:wrap;}
 }
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.8;transform:scale(1.05);}}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:linear-gradient(180deg,#0d0d12,#09090c);border-top:1px solid var(--line);z-index:200;padding:0 .5rem;padding-bottom:env(safe-area-inset-bottom,0px);}
+.bottom-nav{align-items:center;justify-content:space-around;}
+.bnav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:.4rem .6rem;border-radius:10px;cursor:pointer;transition:all .18s;flex:1;max-width:70px;}
+.bnav-item i{font-size:1.3rem;color:var(--muted);transition:color .18s;}
+.bnav-item span{font-size:.58rem;color:var(--muted);font-weight:500;transition:color .18s;text-transform:uppercase;letter-spacing:.06em;}
+.bnav-item.on i{color:var(--gold);}
+.bnav-item.on span{color:var(--gold);}
+.bnav-item:hover i,.bnav-item:hover span{color:var(--gold3);}
+
+/* ── FAB (botão rápido) ── */
+.fab{display:none;position:fixed;bottom:72px;right:1.1rem;width:52px;height:52px;border-radius:50%;background:var(--goldg);border:none;box-shadow:0 4px 20px rgba(240,180,41,.4);cursor:pointer;align-items:center;justify-content:center;z-index:199;transition:all .2s;}
+.fab i{font-size:1.4rem;color:#0a0a0b;}
+.fab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(240,180,41,.5);}
+@media(max-width:700px){.fab{display:flex;}}
+
+/* ── FAB sheet (quick add) ── */
+.fab-sheet{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(180deg,var(--ink2),var(--ink3));border-top:1px solid rgba(240,180,41,.15);border-radius:22px 22px 0 0;padding:1.25rem 1.1rem 2rem;z-index:400;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:0 -8px 40px rgba(0,0,0,.5);}
+.fab-sheet.open{transform:translateY(0);}
+.fab-sheet-handle{width:40px;height:4px;background:var(--line3);border-radius:2px;margin:0 auto 1.25rem;}
+.fab-sheet-title{font-size:.95rem;font-weight:700;color:var(--gold3);margin-bottom:1rem;}
+.fab-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:399;}
+.fab-overlay.open{display:block;}
 </style>
 </head>
 <body>
@@ -311,6 +382,37 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
       <button class="btn-cancel" onclick="closeEdit()">Cancelar</button>
       <button class="btn-save" onclick="saveEdit()"><i class="ti ti-check"></i>Guardar</button>
     </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav" id="bottomNav">
+  <div class="bnav-item on" id="bn-dashboard" onclick="goPage('dashboard')">
+    <i class="ti ti-layout-dashboard"></i><span>Início</span>
+  </div>
+  <div class="bnav-item" id="bn-despesas" onclick="goPage('despesas')">
+    <i class="ti ti-receipt"></i><span>Despesas</span>
+  </div>
+  <div class="bnav-item" id="bn-lucros" onclick="goPage('lucros')">
+    <i class="ti ti-trending-up"></i><span>Lucros</span>
+  </div>
+  <div class="bnav-item" id="bn-contas" onclick="goPage('contas')">
+    <i class="ti ti-building-bank"></i><span>Contas</span>
+  </div>
+  <div class="bnav-item" id="bn-menu" onclick="openSidebar()">
+    <i class="ti ti-menu-2"></i><span>Menu</span>
+  </div>
+</nav>
+<button class="fab" id="fabBtn" onclick="openFabSheet()"><i class="ti ti-plus"></i></button>
+<div class="fab-overlay" id="fabOverlay" onclick="closeFabSheet()"></div>
+<div class="fab-sheet" id="fabSheet">
+  <div class="fab-sheet-handle"></div>
+  <div class="fab-sheet-title">Adicionar rapidamente</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;">
+    <button onclick="closeFabSheet();goPage('despesas')" style="padding:.9rem;background:rgba(255,107,122,.1);border:1px solid rgba(255,107,122,.2);border-radius:12px;color:#ff7b8a;font-family:Outfit,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="ti ti-receipt" style="font-size:1.1rem;"></i>Nova despesa</button>
+    <button onclick="closeFabSheet();goPage('lucros')" style="padding:.9rem;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);border-radius:12px;color:#34d399;font-family:Outfit,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="ti ti-trending-up" style="font-size:1.1rem;"></i>Novo lucro</button>
+    <button onclick="closeFabSheet();goPage('contas');setTimeout(()=>switchContaTab('transf'),300)" style="padding:.9rem;background:rgba(126,184,255,.1);border:1px solid rgba(126,184,255,.2);border-radius:12px;color:var(--blue);font-family:Outfit,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="ti ti-arrows-transfer-up" style="font-size:1.1rem;"></i>Transferência</button>
+    <button onclick="closeFabSheet();goPage('compromissos')" style="padding:.9rem;background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.2);border-radius:12px;color:var(--gold3);font-family:Outfit,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;"><i class="ti ti-calendar-due" style="font-size:1.1rem;"></i>Compromisso</button>
   </div>
 </div>
 
@@ -1780,6 +1882,49 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/fluxo-despesas/sw.js').catch(() => {});
   });
 }
+// ─── MOBILE ──────────────────────────────────────────────────────────────────
+window.openSidebar = function() {
+  document.querySelector('.sb').classList.add('open');
+};
+
+window.updateBottomNav = function(page) {
+  document.querySelectorAll('.bnav-item').forEach(el => el.classList.remove('on'));
+  const el = document.getElementById('bn-' + page);
+  if (el) el.classList.add('on');
+};
+
+window.openFabSheet = function() {
+  document.getElementById('fabSheet').classList.add('open');
+  document.getElementById('fabOverlay').classList.add('open');
+  document.getElementById('fabBtn').style.transform = 'rotate(45deg)';
+};
+
+window.closeFabSheet = function() {
+  document.getElementById('fabSheet').classList.remove('open');
+  document.getElementById('fabOverlay').classList.remove('open');
+  document.getElementById('fabBtn').style.transform = '';
+};
+
+// Update bottom nav when goPage is called
+const _origGoPage = window.goPage;
+window.goPage = function(name) {
+  _origGoPage(name);
+  updateBottomNav(name);
+  closeFabSheet();
+  // Close sidebar on mobile when navigating
+  document.querySelector('.sb')?.classList.remove('open');
+};
+
+// Swipe to close sidebar on mobile
+let _touchStartX = 0;
+document.addEventListener('touchstart', e => { _touchStartX = e.touches[0].clientX; }, { passive: true });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - _touchStartX;
+  const sb = document.querySelector('.sb');
+  if (sb?.classList.contains('open') && dx < -60) sb.classList.remove('open');
+}, { passive: true });
+
+
 // ─── LUCROS ──────────────────────────────────────────────────────────────────
 let LUCRO_MONTH = new Date().toISOString().slice(0, 7); // 'yyyy-mm'
 

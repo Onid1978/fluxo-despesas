@@ -1937,34 +1937,51 @@ window.changeLucroMonth = function(dir) {
 
 window.saveLucro = async function() {
   const desc = document.getElementById('lucroDesc').value.trim();
-  const amt = parseFloat(document.getElementById('lucroAmt').value);
+  const amtRaw = document.getElementById('lucroAmt').value;
+  const amt = parseFloat(amtRaw.replace(',', '.'));
   const date = document.getElementById('lucroDate').value;
   const cat = document.getElementById('lucroCat').value;
   const nota = document.getElementById('lucroNota').value.trim();
-  if (!desc || isNaN(amt) || amt <= 0 || !date) return;
-
   const contaId = document.getElementById('lucroContaInput')?.value || '';
 
-  if (LUCRO_EDIT_ID) {
-    await updateDoc(doc(db, 'users', CU.uid, 'lucros', LUCRO_EDIT_ID), { desc, amt, date, cat, nota, contaId });
-    const idx = LUCROS.findIndex(l => l.id === LUCRO_EDIT_ID);
-    if (idx >= 0) LUCROS[idx] = { ...LUCROS[idx], desc, amt, date, cat, nota, contaId };
-    cancelLucro();
-  } else {
-    // Acrescenta à conta selecionada
-    if (contaId) {
-      const acc = ACCOUNTS.find(a => a.id === contaId);
-      if (acc) {
-        acc.saldo = (parseFloat(acc.saldo) || 0) + amt;
-        await updateDoc(doc(db, 'users', CU.uid, 'accounts', contaId), { saldo: acc.saldo });
+  // Validação com feedback
+  if (!desc) { alert('Preenche a descrição.'); return; }
+  if (!amtRaw || isNaN(amt) || amt <= 0) { alert('Valor inválido.'); return; }
+  if (!date) { alert('Seleciona uma data.'); return; }
+
+  const btn = document.getElementById('lucroSaveBtn');
+  const lbl = document.getElementById('lucroSaveLbl');
+  btn.disabled = true;
+  lbl.textContent = 'A guardar...';
+
+  try {
+    if (LUCRO_EDIT_ID) {
+      await updateDoc(doc(db, 'users', CU.uid, 'lucros', LUCRO_EDIT_ID), { desc, amt, date, cat, nota, contaId });
+      const idx = LUCROS.findIndex(l => l.id === LUCRO_EDIT_ID);
+      if (idx >= 0) LUCROS[idx] = { ...LUCROS[idx], desc, amt, date, cat, nota, contaId };
+      cancelLucro();
+    } else {
+      // Acrescenta à conta selecionada
+      if (contaId) {
+        const acc = ACCOUNTS.find(a => a.id === contaId);
+        if (acc) {
+          acc.saldo = (parseFloat(acc.saldo) || 0) + amt;
+          await updateDoc(doc(db, 'users', CU.uid, 'accounts', contaId), { saldo: acc.saldo });
+        }
       }
+      const ref = await addDoc(lucrosRef(), { desc, amt, date, cat, nota, contaId });
+      LUCROS.push({ id: ref.id, desc, amt, date, cat, nota, contaId });
+      cancelLucro();
     }
-    const ref = await addDoc(lucrosRef(), { desc, amt, date, cat, nota, contaId });
-    LUCROS.push({ id: ref.id, desc, amt, date, cat, nota, contaId });
-    cancelLucro();
+    renderLucros();
+    renderContas();
+  } catch(e) {
+    alert('Erro ao guardar: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    lbl.textContent = LUCRO_EDIT_ID ? 'Guardar' : 'Adicionar lucro';
   }
-  renderLucros();
-  renderContas();
 };
 
 window.editLucro = function(id) {

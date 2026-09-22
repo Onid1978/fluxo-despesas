@@ -872,19 +872,21 @@ const MO = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agost
 const MOS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 // ─── ESTADO ───────────────────────────────────────────────────────────────────
-let CU = null; // firebase user object
+let CU = null;
 let CATS = [];
-let DATA = {}; // { 'yyyy-mm': { budget: '', expenses: [{id,desc,amt,date,cat,note}] } }
+let DATA = {};
+let ACCOUNTS = [];
+let TRANSFERS = [];
+let LUCROS = [];
+let CMP_EDIT_ID = null;
+let CONTA_EDIT_ID = null;
+let LUCRO_EDIT_ID = null;
 let COMMITMENTS = []; // [{id, desc, amt, day, cat, note, active}]
 let CY = new Date().getFullYear(), CM = new Date().getMonth();
 let ANAL_Y = new Date().getFullYear(), DESP_Y = new Date().getFullYear();
 let donutC = null, barC = null, analDonutC = null;
 let EDIT_ID = null, EDIT_Y = null, EDIT_M = null;
-let CMP_EDIT_ID = null;
-let ACCOUNTS = []; // [{id, nome, tipo, saldo, cor, nota}]
-let TRANSFERS = []; // [{id, de, para, amt, date, nota}]
-let CONTA_EDIT_ID = null;
-let LUCROS = []; // [{id, desc, amt, date, cat, nota}]
+// vars declared above
 let LOGIN_MODE = 'entrar'; // 'entrar' | 'registar'
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
@@ -1875,8 +1877,6 @@ Os saldos das contas serão revertidos.`)) return;
 };
 
 
-</script>
-<script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/fluxo-despesas/sw.js').catch(() => {});

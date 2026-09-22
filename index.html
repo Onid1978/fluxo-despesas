@@ -738,6 +738,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
                   <option value="salario">Salário</option>
                   <option value="venda">Venda</option>
                   <option value="freelance">Freelance</option>
+                  <option value="transf-recebida">Transferência recebida</option>
                   <option value="outro">Outro</option>
                 </select>
               </div>
@@ -2017,8 +2018,8 @@ window.cancelLucro = function() {
   document.getElementById('lucroCancelBtn').style.display = 'none';
 };
 
-const CAT_LUCRO_ICONS = { carregamentos: 'ti-device-mobile-charging', salario: 'ti-briefcase', venda: 'ti-shopping-bag', freelance: 'ti-code', outro: 'ti-coin' };
-const CAT_LUCRO_LABELS = { carregamentos: 'Carregamentos', salario: 'Salário', venda: 'Venda', freelance: 'Freelance', outro: 'Outro' };
+const CAT_LUCRO_ICONS = { carregamentos: 'ti-device-mobile-charging', salario: 'ti-briefcase', venda: 'ti-shopping-bag', freelance: 'ti-code', 'transf-recebida': 'ti-transfer-in', outro: 'ti-coin' };
+const CAT_LUCRO_LABELS = { carregamentos: 'Carregamentos', salario: 'Salário', venda: 'Venda', freelance: 'Freelance', 'transf-recebida': 'Transf. recebida', outro: 'Outro' };
 
 function renderLucros() {
   // Month label
@@ -2073,7 +2074,7 @@ function renderLucros() {
 
 
 window.exportLucros = function() {
-  const CAT_LABELS = { carregamentos: 'Carregamentos', salario: 'Salário', venda: 'Venda', freelance: 'Freelance', outro: 'Outro' };
+  const CAT_LABELS = { carregamentos: 'Carregamentos', salario: 'Salário', venda: 'Venda', freelance: 'Freelance', 'transf-recebida': 'Transf. recebida', outro: 'Outro' };
   const mNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
   const sorted = [...LUCROS].sort((a, b) => (a.date || '').localeCompare(b.date || ''));

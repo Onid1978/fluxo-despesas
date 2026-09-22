@@ -885,7 +885,6 @@ let ACCOUNTS = []; // [{id, nome, tipo, saldo, cor, nota}]
 let TRANSFERS = []; // [{id, de, para, amt, date, nota}]
 let CONTA_EDIT_ID = null;
 let LUCROS = []; // [{id, desc, amt, date, cat, nota}]
-let LUCRO_EDIT_ID = null;
 let LOGIN_MODE = 'entrar'; // 'entrar' | 'registar'
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
@@ -1927,7 +1926,8 @@ document.addEventListener('touchend', e => {
 
 
 // ─── LUCROS ──────────────────────────────────────────────────────────────────
-let LUCRO_MONTH = new Date().toISOString().slice(0, 7); // 'yyyy-mm'
+var LUCRO_EDIT_ID = null;
+var LUCRO_MONTH = new Date().toISOString().slice(0, 7); // 'yyyy-mm'
 
 window.changeLucroMonth = function(dir) {
   const [y, m] = LUCRO_MONTH.split('-').map(Number);

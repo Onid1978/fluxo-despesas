@@ -283,16 +283,28 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
   .bottom-nav{display:flex !important;}
   .kpis{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem;}
   .kpi{padding:1rem;}
-  .kpi-val{font-size:1.15rem;}
-  .card{padding:1rem;margin-bottom:10px;}
+  .kpi-val{font-size:1.1rem;}
+  .kpi-tag{font-size:.6rem;}
+  .card{padding:.9rem;margin-bottom:10px;}
   .grid2{grid-template-columns:1fr;gap:0;}
-  .topbar{flex-direction:column;align-items:flex-start;gap:.65rem;margin-bottom:1rem;}
-  .topbar > div:last-child{width:100%;}
-  .mpill{min-width:0;flex:1;text-align:center;}
+  .topbar{flex-direction:column;align-items:flex-start;gap:.6rem;margin-bottom:1rem;}
+  .topbar > div:last-child{width:100%;display:flex;justify-content:space-between;align-items:center;}
+  .mpill,.month-label{flex:1;text-align:center;min-width:0;}
   .fi{padding:.75rem 1rem;font-size:1rem;}
   .fr2,.fr3{grid-template-columns:1fr;}
-  .btn-add{padding:1rem;font-size:.95rem;}
+  .btn-add{padding:1rem;font-size:.95rem;border-radius:12px;}
   .btn-login{padding:1rem;}
+  .card-label{font-size:.65rem;}
+  .page-title{font-size:1.15rem;}
+  .elist-name{font-size:.88rem;}
+  #db-contas-list{gap:.4rem;}
+}
+/* Tablet */
+@media(min-width:701px) and (max-width:1024px){
+  .sb{width:200px;}
+  .kpis{grid-template-columns:repeat(2,1fr);}
+  .grid2{grid-template-columns:1fr;}
+  .kpi-val{font-size:1.3rem;}
 }
 
 /* BOTTOM NAV */
@@ -415,7 +427,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
               <div class="mpill" id="monthLabel">—</div>
               <button class="mnav" onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
             </div>
-            <div class="bget"><label>Orçamento</label><input class="bget-in" type="number" id="budgetInput" min="0" step="50" placeholder="— €" oninput="saveBudget()"></div>
+            <div class="bget"><label>Orçamento</label><input class="bget-in" type="number" id="budgetInput" min="0" step="50" placeholder="Definir orçamento..." oninput="saveBudget()"></div>
           </div>
         </div>
         <div class="bbar" id="budgetBar">
@@ -433,12 +445,12 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:1.1rem 0;}
           </div>
           <div id="db-cmp-list" style="display:flex;flex-direction:column;gap:5px;"></div>
         </div>
-        <div id="db-contas-widget" style="display:none;margin-bottom:1.5rem;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
-            <span style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">As minhas contas</span>
-            <button onclick="goPage('contas')" style="background:none;border:none;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:Outfit,sans-serif;">Ver todas →</button>
+        <div id="db-contas-widget" style="display:none;margin-bottom:1.25rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
+            <span style="font-size:.65rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">As minhas contas</span>
+            <button onclick="goPage('contas')" style="background:none;border:none;font-size:.7rem;color:var(--gold);cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;">Ver todas →</button>
           </div>
-          <div id="db-contas-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.65rem;"></div>
+          <div id="db-contas-list" style="display:flex;gap:.5rem;overflow-x:auto;padding-bottom:.25rem;scrollbar-width:none;"></div>
         </div>
         <div class="kpis">
           <div class="kpi"><div class="kpi-top"><span class="kpi-tag">Total gasto</span><div class="kpi-ico" style="background:rgba(232,255,71,.08);"><i class="ti ti-credit-card" style="color:var(--lime);"></i></div></div><div class="kpi-val" id="metTotal">0,00 €</div><div class="kpi-accent" style="background:linear-gradient(90deg,var(--lime),transparent);"></div></div>
@@ -1458,6 +1470,17 @@ function renderAll() {
 }
 
 
+window.toggleCmpCard = function() {
+  const body = document.getElementById('db-cmp-body');
+  const total = document.getElementById('db-cmp-total');
+  const chevron = document.getElementById('cmpChevron');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : '';
+  if (total) total.style.display = isOpen ? 'none' : '';
+  if (chevron) chevron.style.transform = isOpen ? 'rotate(180deg)' : '';
+};
+
 // ─── SIDEBAR NAV ─────────────────────────────────────────────────────────────
 // Add Lucros + Contas to sidebar (done in HTML)
 
@@ -1583,14 +1606,12 @@ function renderDashboardContas() {
   l.innerHTML=ACCOUNTS.map(a=>{
     const s=parseFloat(a.saldo)||0;
     const ic=TIPO_ICONS[a.tipo]||'ti-wallet';
-    return `<div onclick="goPage('contas')" style="background:var(--ink2);border:1px solid var(--line);border-radius:12px;padding:.85rem;cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='${a.cor}'" onmouseout="this.style.borderColor='var(--line)'">
-      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
-        <div style="width:28px;height:28px;border-radius:7px;background:${a.cor}22;display:flex;align-items:center;justify-content:center;">
-          <i class="ti ${ic}" style="color:${a.cor};font-size:.85rem;"></i>
-        </div>
-        <span style="font-size:.78rem;font-weight:500;color:var(--head);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.nome}</span>
+    return `<div onclick="goPage('contas')" style="flex-shrink:0;background:var(--ink2);border:1px solid var(--line);border-left:3px solid ${a.cor};border-radius:10px;padding:.65rem .75rem;cursor:pointer;transition:all .18s;min-width:130px;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;">
+        <i class="ti ${ic}" style="color:${a.cor};font-size:.85rem;flex-shrink:0;"></i>
+        <span style="font-size:.72rem;font-weight:500;color:var(--soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${a.nome}">${a.nome}</span>
       </div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;color:${s<0?'#ff7b8a':'#34d399'};">${fmt(s)}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.95rem;font-weight:700;color:${s<0?'#ff7b8a':'#34d399'};">${fmt(s)}</div>
     </div>`;
   }).join('');
 }

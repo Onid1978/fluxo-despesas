@@ -1276,7 +1276,7 @@ function renderDashboard() {
   document.getElementById('metTotal').textContent = fmt(total);
   document.getElementById('metCount').textContent = count;
   document.getElementById('metAvg').textContent = count ? fmt(total / count) : '0,00 €';
-  const lMes=LUCROS.filter(l=>l.date&&l.date.startsWith(k)); const tLuc=lMes.reduce((s,l)=>s+(parseFloat(l.amt)||0),0); const sal=tLuc-total;
+  const kMes=String(CY)+'-'+String(CM+1).padStart(2,'0'); const lMes=LUCROS.filter(l=>l.date&&l.date.startsWith(kMes)); const tLuc=lMes.reduce((s,l)=>s+(parseFloat(l.amt)||0),0); const sal=tLuc-total;
   const elL=document.getElementById('metLucros'); if(elL) elL.textContent=fmt(tLuc);
   const elS=document.getElementById('metSaldo'); if(elS){elS.textContent=fmt(sal);elS.style.color=sal>=0?'#34d399':'#ff7b8a';}
 

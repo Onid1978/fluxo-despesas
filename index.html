@@ -1460,7 +1460,7 @@ function renderDefinicoes() {
 function renderAll() {
   renderDashboard();
   renderDashboardContas();
-  if(document.getElementById('p-contas')?.classList.contains('active')) renderContas();
+  renderContas(); // sempre, para popular os selects de conta em todos os formulários
   if(document.getElementById('p-lucros')?.classList.contains('active')) renderLucros();
   if (document.getElementById('p-compromissos').classList.contains('active')) renderCompromissos();
   if (document.getElementById('p-despesas').classList.contains('active')) renderDespesas();
